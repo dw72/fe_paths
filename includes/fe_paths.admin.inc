@@ -5,6 +5,8 @@
  */
 
 function fe_paths_admin_form($form, &$form_state, $file_type_argument) {
+  $settings = fe_paths_get_settings();
+
   $token_tree = array(
     '#type' => 'fieldset',
     '#title' => t('Replacement patterns'),
@@ -24,13 +26,14 @@ function fe_paths_admin_form($form, &$form_state, $file_type_argument) {
         '#element_validate' => array('token_element_validate'),
         '#token_types' => array('file', 'file'),
         '#field_prefix' => variable_get('file_public_path', conf_path() . '/files') . '/',
+        '#default_value' => $settings[$file_type_argument]['public_path'],
       ),
       "fep_{$file_type_argument}_public_filename" => array(
         '#type' => 'textfield',
         '#title' => t("Filename for $file_type_argument"),
         '#element_validate' => array('token_element_validate'),
         '#token_types' => array('file', 'file'),
-        '#default_value' => variable_get("fep_{$file_type_argument}_public_filename", '[file:name-only-original].[file:extension-original]'),
+        '#default_value' => $settings[$file_type_argument]['public_filename'],
       ) + $token_tree,
     ),
     'private_settings' => array(
@@ -43,13 +46,14 @@ function fe_paths_admin_form($form, &$form_state, $file_type_argument) {
         '#element_validate' => array('token_element_validate'),
         '#token_types' => array('file', 'file'),
         '#field_prefix' => variable_get('file_private_path', conf_path() . '/files') . '/',
+        '#default_value' => $settings[$file_type_argument]['private_path'],
       ),
       "fep_{$file_type_argument}_private_filename" => array(
         '#type' => 'textfield',
         '#title' => t("Filename for $file_type_argument"),
         '#element_validate' => array('token_element_validate'),
         '#token_types' => array('file', 'file'),
-        '#default_value' => variable_get("fep_{$file_type_argument}_private_filename", '[file:name-only-original].[file:extension-original]'),
+        '#default_value' => $settings[$file_type_argument]['private_filename'],
       ) + $token_tree,
     ),
   );
