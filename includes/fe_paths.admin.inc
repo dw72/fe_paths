@@ -30,6 +30,7 @@ function fe_paths_admin_form($form, &$form_state, $file_type_argument) {
         '#title' => t("Filename for $file_type_argument"),
         '#element_validate' => array('token_element_validate'),
         '#token_types' => array('file', 'file'),
+        '#default_value' => variable_get("fep_{$file_type_argument}_public_filename", '[file:name-only-original].[file:extension-original]'),
       ) + $token_tree,
     ),
     'private_settings' => array(
@@ -48,6 +49,7 @@ function fe_paths_admin_form($form, &$form_state, $file_type_argument) {
         '#title' => t("Filename for $file_type_argument"),
         '#element_validate' => array('token_element_validate'),
         '#token_types' => array('file', 'file'),
+        '#default_value' => variable_get("fep_{$file_type_argument}_private_filename", '[file:name-only-original].[file:extension-original]'),
       ) + $token_tree,
     ),
   );

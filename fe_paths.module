@@ -49,7 +49,7 @@ function fe_paths_menu() {
         'type' => MENU_LOCAL_TASK,
         'weight' => 5,
         'file' => 'fe_paths.admin.inc',
-        'file path' => drupal_get_path('module', 'fe_path') . '/includes',
+        'file path' => drupal_get_path('module', 'fe_paths') . '/includes',
       ) + $access;
     }
   }
@@ -110,6 +110,5 @@ function fe_paths_tokens($type, $tokens, array $data = array(), array $options =
       }
     }
   }
-
   return $replacements;
 }
