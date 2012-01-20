@@ -94,11 +94,18 @@ function fe_paths_get_settings($file_type = NULL) {
   return is_null($file_type) ? $settings : $settings[$file_type];
 }
 
-function fe_paths_file_load($file) {
+/**
+ * Implements hook_file_presave().
+ */
+function fe_paths_file_presave($file) {
+  // Store original filename in the database.
+  if (empty($file->origname)) {
+    $file->origname = $file->filename;
+  }
   fe_paths_process($file[1]);
 }
 
-function fe_paths_process(&$file) {
+function fe_paths_process($file) {
   // Set a drupal_static variable, to prevent multiple processing.
   $processed = &drupal_static(__FUNCTION__, FALSE);
 
@@ -126,6 +133,7 @@ function fe_paths_process(&$file) {
     //Move the files, if necessary
     if ($file->uri != $new_uri) {
       $directory = $scheme . '://' . $path;
+      //Create directory, if necessary
       file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
       // Set processed here true, to prevent another processing from file_move.
       $processed = TRUE;
