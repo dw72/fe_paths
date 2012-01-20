@@ -58,7 +58,7 @@ function fe_paths_menu() {
 
 /**
  * Get all variables defined by File Entity Paths
- * 
+ *
  * @param $file_type
  *   The bundle name of file, eg. image, application
  *
@@ -71,7 +71,7 @@ function fe_paths_get_settings($file_type = NULL) {
 
   if (!isset($vars)) {
     $entity_info = entity_get_info('file');
-    foreach ($entity_info['bundles'] as $file_type => $bundle_info) {
+    foreach ($entity_info['bundles'] as $type => $bundle_info) {
       if (isset($bundle_info['admin'])) {
         $defaults = array(
           'default' => array(
@@ -83,8 +83,8 @@ function fe_paths_get_settings($file_type = NULL) {
             'filename' => '[file:name-only-original].[file:extension-original]',
           ),
         );
-        $vars = variable_get("fep_$file_type", $defaults);
-        $settings[$file_type] = array(
+        $vars = variable_get("fep_$type", $defaults);
+        $settings[$type] = array(
           'default' => $vars['default'],
           'private' => $vars['private'],
         );
@@ -95,16 +95,44 @@ function fe_paths_get_settings($file_type = NULL) {
 }
 
 function fe_paths_file_load($file) {
-  fe_paths_process_path($file[1]);
+  fe_paths_process($file[1]);
 }
 
-function fe_paths_process_path($file) {
-  $settings = fe_paths_get_settings();
-  $method = str_replace('://', '', file_uri_scheme($file->uri));
-  $replace = $settings[$file->type]["{$method}_path"];
-  $path = token_replace($replace, array('file' => $file, 'file'), array('clear' => TRUE));
-  $paths = $path != '' ? explode('/', $path) : NULL;
-  return $path;
+function fe_paths_process(&$file) {
+  // Set a drupal_static variable, to prevent multiple processing.
+  $processed = &drupal_static(__FUNCTION__, FALSE);
+
+  if (!$processed) {
+    $settings = fe_paths_get_settings($file->type);
+    $scheme = file_uri_scheme($file->uri);
+    $private = $scheme == 'private' ? TRUE : FALSE;
+
+    if ($private) {
+      $replace_path = $settings['private']['path'];
+      $replace_filename = $settings['private']['filename'];
+    }
+    else {
+      $replace_path = $settings['default']['path'];
+      $replace_filename = $settings['default']['filename'];
+    }
+
+    //First process tokens
+    $path = token_replace($replace_path, array('file' => $file, 'file'), array('clear' => TRUE));
+    $filename = token_replace($replace_filename, array('file' => $file, 'file'), array('clear' => TRUE));
+
+    $paths = $path != '' ? explode('/', $path) : NULL;
+
+    $new_uri = $scheme . '://' . $path . '/' . $filename;
+    //Move the files, if necessary
+    if ($file->uri != $new_uri) {
+      $directory = $scheme . '://' . $path;
+      file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
+      // Set processed here true, to prevent another processing from file_move.
+      $processed = TRUE;
+      file_move($file, $new_uri);
+    }
+    $processed = TRUE;
+  }
 }
 
 /**
