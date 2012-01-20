@@ -4,3 +4,40 @@
  * Contains functions for the File Entity Paths module.
  */
 
+/**
+ * Implements hook_menu().
+ */
+function fe_paths_menu() {
+  // Attach a "Manage file paths" tab to each file type in the same way that
+  // Field UI attaches "Manage fields" and "Manage display" tabs. Note that
+  // Field UI does not have to be enabled; we're just using the same IA pattern
+  // here for attaching the "Manage file display" page.
+  $entity_info = entity_get_info('file');
+  foreach ($entity_info['bundles'] as $file_type => $bundle_info) {
+    if (isset($bundle_info['admin'])) {
+      // Get the base path and access.
+      $path = $bundle_info['admin']['path'];
+      $access = array_intersect_key($bundle_info['admin'], drupal_map_assoc(array('access callback', 'access arguments')));
+      $access += array(
+        'access callback' => 'user_access',
+        'access arguments' => array('administer site configuration'),
+      );
+
+      // The file type must be passed to the page callbacks. It might be
+      // configured as a wildcard (multiple file types sharing the same menu
+      // router path).
+      $file_type_argument = isset($bundle_info['admin']['bundle argument']) ? $bundle_info['admin']['bundle argument'] : $file_type;
+
+      // Add the 'Manage file paths' tab.
+      $items["$path/file-paths"] = array(
+        'title' => 'Manage file paths',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('fe_paths_admin_form', $file_type_argument),
+        'type' => MENU_LOCAL_TASK,
+        'weight' => 5,
+        'file' => '/includes/fe_paths.admin.inc',
+      ) + $access;
+    }
+  }
+  return $items;
+}
