@@ -57,6 +57,42 @@ function fe_paths_menu() {
 }
 
 /**
+ * Get all variables defined by File Entity Paths
+ *
+ * @return $settings
+ *   An array of variables.
+ */
+function fe_paths_get_settings() {
+  $settings = &drupal_static(__FUNCTION__);
+
+  if (!isset($vars)) {
+    $entity_info = entity_get_info('file');
+    foreach ($entity_info['bundles'] as $file_type => $bundle_info) {
+      if (isset($bundle_info['admin'])) {
+        $settings[$file_type]['public_path'] = variable_get("fep_{$file_type}_public_path", '');
+        $settings[$file_type]['private_path'] = variable_get("fep_{$file_type}_private_path", '');
+        $settings[$file_type]['public_filename'] = variable_get("fep_{$file_type}_public_filename", '[file:name-only-original].[file:extension-original]');
+        $settings[$file_type]['private_filename'] = variable_get("fep_{$file_type}_private_filename", '[file:name-only-original].[file:extension-original]');
+      }
+    }
+  }
+  return $settings;
+}
+
+function fe_paths_file_load($file) {
+  fe_paths_process_path($file[1]);
+}
+
+function fe_paths_process_path($file) {
+  $settings = fe_paths_get_settings();
+  $method = str_replace('://', '', file_uri_scheme($file->uri));
+  $replace = $settings[$file->type]["{$method}_path"];
+  $path = token_replace($replace, array('file' => $file, 'file'), array('clear' => TRUE));
+  $paths = $path != '' ? explode('/', $path) : NULL;
+  return $path;
+}
+
+/**
  * Implements hook_token_info().
  */
 function fe_paths_token_info() {
