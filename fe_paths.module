@@ -58,11 +58,15 @@ function fe_paths_menu() {
 
 /**
  * Get all variables defined by File Entity Paths
+ * 
+ * @param $file_type
+ *   The bundle name of file, eg. image, application
  *
  * @return $settings
- *   An array of variables.
+ *   An array of variables.If $file_type set, only returns the settings of
+ *   $file_type
  */
-function fe_paths_get_settings($file_type_argument = NULL) {
+function fe_paths_get_settings($file_type = NULL) {
   $settings = &drupal_static(__FUNCTION__);
 
   if (!isset($vars)) {
@@ -87,7 +91,7 @@ function fe_paths_get_settings($file_type_argument = NULL) {
       }
     }
   }
-  return is_null($file_type_argument) ? $settings : $settings[$file_type_argument];
+  return is_null($file_type) ? $settings : $settings[$file_type];
 }
 
 function fe_paths_file_load($file) {
