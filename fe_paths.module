@@ -8,14 +8,16 @@
  * Implements hook_menu().
  */
 function fe_paths_menu() {
-  if (module_exists('token') && module_exists('devel')) {
+  // Add Token tab to each file, if devel modul exists.
+  if (module_exists('devel')) {
     $items['file/%file/token'] = array(
       'title' => 'Tokens',
       'page callback' => 'token_devel_token_object',
-      'page arguments' => array('comment', 1),
+      'page arguments' => array('file', 1),
       'access arguments' => array('access devel information'),
       'type' => MENU_LOCAL_TASK,
-      'file' => drupal_get_path('module', 'token') . '/token.pages.inc',
+      'file' => 'token.pages.inc',
+      'file path' => drupal_get_path('module', 'token'),
       'weight' => 5,
     );
   }
@@ -46,7 +48,8 @@ function fe_paths_menu() {
         'page arguments' => array('fe_paths_admin_form', $file_type_argument),
         'type' => MENU_LOCAL_TASK,
         'weight' => 5,
-        'file' => '/includes/fe_paths.admin.inc',
+        'file' => 'fe_paths.admin.inc',
+        'file path' => drupal_get_path('module', 'fe_path') . '/includes',
       ) + $access;
     }
   }
