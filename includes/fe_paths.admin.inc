@@ -5,7 +5,7 @@
  */
 
 function fe_paths_admin_form($form, &$form_state, $file_type_argument) {
-  $settings = fe_paths_get_settings();
+  $settings = fe_paths_get_settings($file_type_argument);
 
   $token_tree = array(
     '#type' => 'fieldset',
@@ -15,45 +15,46 @@ function fe_paths_admin_form($form, &$form_state, $file_type_argument) {
     '#description' => theme('token_tree', array('token_types' => array('file', 'file'))),
     '#weight' => 10,
   );
-  $form = array(
-    'public_settings' => array(
+  $form["fep_$file_type_argument"] = array(
+    '#tree' => true,
+    'default' => array(
       '#type' => 'fieldset',
-      '#title' => t('Public file'),
-      '#description' => t('Default settings for public files.'),
-      "fep_{$file_type_argument}_public_path" => array(
+      '#title' => t('Defaults'),
+      '#description' => t('Default settings for files.'),
+      'path' => array(
         '#type' => 'textfield',
         '#title' => t("Path for $file_type_argument"),
         '#element_validate' => array('token_element_validate'),
         '#token_types' => array('file', 'file'),
         '#field_prefix' => variable_get('file_public_path', conf_path() . '/files') . '/',
-        '#default_value' => $settings[$file_type_argument]['public_path'],
+        '#default_value' => $settings['default']['path'],
       ),
-      "fep_{$file_type_argument}_public_filename" => array(
+      'filename' => array(
         '#type' => 'textfield',
         '#title' => t("Filename for $file_type_argument"),
         '#element_validate' => array('token_element_validate'),
         '#token_types' => array('file', 'file'),
-        '#default_value' => $settings[$file_type_argument]['public_filename'],
+        '#default_value' => $settings['default']['filename'],
       ) + $token_tree,
     ),
-    'private_settings' => array(
+    'private' => array(
       '#type' => 'fieldset',
       '#title' => t('Private file'),
       '#description' => t('Default settings for private files.'),
-      "fep_{$file_type_argument}_private_path" => array(
+      'path' => array(
         '#type' => 'textfield',
         '#title' => t("Path for $file_type_argument"),
         '#element_validate' => array('token_element_validate'),
         '#token_types' => array('file', 'file'),
         '#field_prefix' => variable_get('file_private_path', conf_path() . '/files') . '/',
-        '#default_value' => $settings[$file_type_argument]['private_path'],
+        '#default_value' => $settings['private']['path'],
       ),
-      "fep_{$file_type_argument}_private_filename" => array(
+      'filename' => array(
         '#type' => 'textfield',
         '#title' => t("Filename for $file_type_argument"),
         '#element_validate' => array('token_element_validate'),
         '#token_types' => array('file', 'file'),
-        '#default_value' => $settings[$file_type_argument]['private_filename'],
+        '#default_value' => $settings['private']['filename'],
       ) + $token_tree,
     ),
   );
