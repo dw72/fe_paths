@@ -60,15 +60,15 @@ function fe_paths_menu() {
  * Implements hook_token_info().
  */
 function fe_paths_token_info() {
-  $info['tokens']['file']['ffp-name-only'] = array(
+  $info['tokens']['file']['name-only'] = array(
     'name' => t("File name"),
     'description' => t("File name without extension."),
   );
-  $info['tokens']['file']['ffp-name-only-original'] = array(
+  $info['tokens']['file']['name-only-original'] = array(
     'name' => t("File name - original"),
     'description' => t("File name without extension - original."),
   );
-  $info['tokens']['file']['ffp-extension-original'] = array(
+  $info['tokens']['file']['extension-original'] = array(
     'name' => t("File extension - original"),
     'description' => t("File extension - original."),
   );
@@ -93,17 +93,17 @@ function fe_paths_tokens($type, $tokens, array $data = array(), array $options =
 
     foreach ($tokens as $name => $original) {
       switch ($name) {
-        case 'ffp-name-only':
+        case 'name-only':
           $info = pathinfo($file->filename);
           $replacements[$original] = $info['filename'];
           break;
 
-        case 'ffp-name-only-original':
+        case 'name-only-original':
           $info = pathinfo($file->origname);
           $replacements[$original] = $info['filename'];
           break;
 
-        case 'ffp-extension-original':
+        case 'extension-original':
           $info = pathinfo($file->origname);
           $replacements[$original] = $info['extension'];
           break;
