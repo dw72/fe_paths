@@ -110,8 +110,6 @@ function fe_paths_file_process($file) {
   $processed = &drupal_static(__FUNCTION__, FALSE);
 
   if (!$processed) {
-    $test = file_uri_to_object($file->uri);
-    dsm(get_defined_vars());
     $settings = fe_paths_get_settings($file->type);
     $scheme = file_uri_scheme($file->uri);
     $private = $scheme == 'private' ? TRUE : FALSE;
