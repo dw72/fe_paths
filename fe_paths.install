@@ -38,6 +38,13 @@ function fe_paths_install() {
   db_update('file_managed')
     ->expression('origname', 'filename')
     ->execute();
+  // Increase module weight.
+  db_update('system')
+    ->fields(array(
+      'weight' => 5,
+    ))
+    ->condition('filename', 'fe_paths', '=')
+    ->execute();
 }
 
 /**
