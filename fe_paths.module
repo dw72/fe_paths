@@ -205,10 +205,14 @@ function fe_paths_tokens($type, $tokens, array $data = array(), array $options =
 
         case 'extension-original':
           $info = pathinfo($file->origname);
-          $replacements[$original] = $info['extension'];
+          // Devel themer provides files with no extensions. @todo: test how
+          // will this work.
+          $replacements[$original] = isset($info['extension']) ? $info['extension'] : '';
           break;
       }
+      dsm(get_defined_vars());
     }
   }
+
   return $replacements;
 }
