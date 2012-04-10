@@ -105,9 +105,14 @@ function fe_paths_file_presave($file) {
   fe_paths_file_process($file);
 }
 
+/**
+ * Actually processes the files.
+ * @see fe_paths_file_presave().
+ * @see fe_paths_move_files().
+ */
 function fe_paths_file_process($file) {
-  // Set a drupal_static variable, to prevent multiple processing.
-  $processed = &drupal_static(__FUNCTION__, FALSE);
+  // Get a static of processed files to prevent infinite processing.
+  $processed = &drupal_static(__FUNCTION__, array());
 
   // Only work on local files, that have not been processed, and that already have a file_entity type.
   if (file_entity_file_is_local($file) && !array_key_exists($file->origname, $processed) && isset($file->type)) {
@@ -131,31 +136,35 @@ function fe_paths_file_process($file) {
 
     $paths = $path != '' ? explode('/', $path) : NULL;
 
-    $new_uri = $scheme . '://' . $path . '/' . $filename;
+    $new_uri = $scheme . '://' . $path . $filename;
     // Move the files, if necessary
     if ($file->uri != $new_uri) {
       $directory = $scheme . '://' . $path;
-      // Create directory, if necessary
-      file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
-      // Set processed here true, to prevent another processing from file_move.
-      $processed = TRUE;
-
-      if (file_move($file, $new_uri)) {
-        // Because of file_move works with a cloned $file object, need to update
-        // this $file object.
-        $file->filename = $filename;
-        $file->uri = $new_uri;
-
-        // Check, if directory is empty, and delete it, if yes
-        $files = file_scan_directory($old_dir_uri, '/.*/');
-        if (empty($files)) {
-          drupal_rmdir($old_dir_uri);
-        }
-      };
+      drupal_register_shutdown_function('fe_paths_move_files', $directory, $file, $new_uri, $filename, $old_dir_uri);
     }
-    $processed = TRUE;
+    $processed[$file->origname] = TRUE;
   }
 }
+
+/**
+ * A function that can be called in the page shutdown to actually move files. Not safe against recursion.
+ */
+function fe_paths_move_files($directory, $file, $new_uri, $filename, $old_dir_uri) {
+  // Create directory, if necessary.
+  file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
+  if (file_move($file, $new_uri)) {
+    // Because of file_move works with a cloned $file object, need to update
+    // this $file object.
+    $file->filename = $filename;
+    $file->uri = $new_uri;
+
+    // Check, if directory is empty, and delete it, if yes
+    $files = file_scan_directory($old_dir_uri, '/.*/');
+    if (file_exists($old_dir_uri) && empty($files)) {
+      drupal_rmdir($old_dir_uri);
+     }
+   }
+ }
 
 /**
  * Implements hook_token_info().
