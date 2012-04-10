@@ -109,7 +109,8 @@ function fe_paths_file_process($file) {
   // Set a drupal_static variable, to prevent multiple processing.
   $processed = &drupal_static(__FUNCTION__, FALSE);
 
-  if (!$processed) {
+  // Only work on local files, that have not been processed, and that already have a file_entity type.
+  if (file_entity_file_is_local($file) && !array_key_exists($file->origname, $processed) && isset($file->type)) {
     $settings = fe_paths_get_settings($file->type);
     $scheme = file_uri_scheme($file->uri);
     $private = $scheme == 'private' ? TRUE : FALSE;
