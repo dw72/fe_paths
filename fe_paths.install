@@ -7,6 +7,53 @@
  */
 
 /**
+ * Implements hook_schema().
+ */
+function fe_paths_schema() {
+  $schema['fe_paths_config'] = array(
+    'description' => 'Table definition for fe_paths config entity schema. ',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The unique identifier for config.',
+        'not null' => TRUE,
+        'type' => 'serial',
+      ),
+      'machine_name' => array(
+        'type' => 'varchar',
+        'length' => '64',
+        'not null' => TRUE,
+        'description' => 'The machine name of the configuration.',
+      ),
+      'active' => array(
+        'description' => 'Boolean indicating whether the configuration is active.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'Weight of the settings.',
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'size' => 'big',
+        'not null' => FALSE,
+        'serialize' => TRUE,
+        'description' => 'The configuration data, serialized.',
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'machine_name' => array('machine_name'),
+    ),
+  );
+  
+  return $schema;
+}
+/**
  * Implements hook_schema_alter().
  *
  * @param $schema
@@ -52,4 +99,54 @@ function fe_paths_install() {
  */
 function fe_paths_uninstall() {
   db_drop_field('file_managed', 'origname');
+}
+
+/**
+ * Implements hook_update_N();
+ *
+ * Create missing database table to store fe_paths configuration.
+ */
+function fe_paths_update_7000() {
+  $schema['fe_paths_config'] = array(
+    'description' => 'Table definition for fe_paths config entity schema. ',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The unique identifier for config.',
+        'not null' => TRUE,
+        'type' => 'serial',
+      ),
+      'machine_name' => array(
+        'type' => 'varchar',
+        'length' => '64',
+        'not null' => TRUE,
+        'description' => 'The machine name of the configuration.',
+      ),
+      'active' => array(
+        'description' => 'Boolean indicating whether the configuration is active.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'Weight of the settings.',
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'size' => 'big',
+        'not null' => FALSE,
+        'serialize' => TRUE,
+        'description' => 'The configuration data, serialized.',
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'machine_name' => array('machine_name'),
+    ),
+  );
+  db_create_table('fe_paths_config', $schema['fe_paths_config']);
+  return t('The table for configuration created successful.');
 }
