@@ -24,6 +24,13 @@ function fe_paths_schema() {
         'not null' => TRUE,
         'description' => 'The machine name of the configuration.',
       ),
+      'label' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'description' => 'The label of the configuration.',
+        'default' => 'unlabeled',
+      ),
       'active' => array(
         'description' => 'Boolean indicating whether the configuration is active.',
         'type' => 'int',
@@ -120,6 +127,13 @@ function fe_paths_update_7000() {
         'length' => '64',
         'not null' => TRUE,
         'description' => 'The machine name of the configuration.',
+      ),
+      'label' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'description' => 'The label of the configuration.',
+        'default' => 'unlabeled',
       ),
       'active' => array(
         'description' => 'Boolean indicating whether the configuration is active.',
