@@ -31,8 +31,14 @@ function fe_paths_schema() {
         'description' => 'The label of the configuration.',
         'default' => 'unlabeled',
       ),
-      'active' => array(
-        'description' => 'Boolean indicating whether the configuration is active.',
+      'module' => array(
+        'description' => 'The name of the providing module if the entity has been defined in code. (Need for exportables.)',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'status' => array(
+        'description' => 'Boolean indicating whether the configuration is active. (Need for exportables.)',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 1,
@@ -120,6 +126,9 @@ function fe_paths_install() {
  */
 function fe_paths_uninstall() {
   db_drop_field('file_managed', 'origname');
+  // Need to 'Column not found:' error message after uninstall module.
+  cache_clear_all();
+  registry_rebuild();
 }
 
 /**
@@ -149,8 +158,14 @@ function fe_paths_update_7000() {
         'description' => 'The label of the configuration.',
         'default' => 'unlabeled',
       ),
-      'active' => array(
-        'description' => 'Boolean indicating whether the configuration is active.',
+      'module' => array(
+        'description' => 'The name of the providing module if the entity has been defined in code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'status' => array(
+        'description' => 'Boolean indicating whether the configuration is active. (Need for exportables.)',
         'type' => 'int',
         'not null' => TRUE,
         'default' => 1,
