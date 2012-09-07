@@ -227,6 +227,7 @@ function fe_paths_entity_info() {
     $return['fe_paths_config']['entity cache'] = TRUE;
   }
 
+  return $return;
 }
 
 /**
@@ -252,4 +253,96 @@ function fe_paths_check_machine_name($machine_name) {
     ->condition('machine_name', $machine_name)
     ->execute()
     ->rowCount();
+}
+
+/**
+ * Load multiple File Entity Paths config entities based on certain conditions.
+ *
+ * @param $ids
+ *   An array of entity IDs.
+ *   If $ids contains 'all', every config will be loaded.
+ * @param $conditions
+ *   An array of conditions to match against the {entity} table.
+ * @param bool $reset
+ *   A boolean indicating that the internal cache should be reset.
+ *
+ * @return
+ *   An array of File Entity Paths config object objects, indexed by id.
+ */
+function fe_paths_config_load_multiple($ids = array('all'), $conditions = array(), $reset = FALSE) {
+  if (in_array('all', $ids)) {
+    $ids = db_select('fe_paths_config', 'fe')
+      ->fields('fe', array('id'))
+      ->execute()
+      ->fetchField();
+  }
+  return entity_load('fe_paths_config', $ids, $conditions, $reset);
+}
+
+/**
+ * Load File Entity Paths config entity by own id.
+ *
+ * @param $id
+ *   The id of the File Entity Paths config
+ * @param bool $reset
+ *   A boolean indicating that the internal cache should be reset.
+ *
+ * @return mixed
+ *   The File Entity Paths config if loaded successful else FALSE.
+ */
+function fe_paths_config_load($id, $reset = FALSE) {
+  $object = fe_paths_config_delete_multiple(array($id), array(), $reset);
+  return isset($object['id']) ? isset($object['id']) : FALSE;
+}
+
+/**
+ * Delete multiple File Entity Paths config entities.
+ *
+ * @param $ids
+ *   An array of File Entity Paths config entity IDs.
+ */
+function fe_paths_config_delete_multiple(array $ids) {
+  return entity_delete_multiple('fe_paths_config', $ids);
+}
+
+/**
+ * Delete File Entity Paths config entity.
+ *
+ * @param $id
+ *   The File Entity Paths config entity IDs.
+ */
+function fe_paths_config_delete($id) {
+  return fe_paths_config_delete_multiple(array($id));
+}
+
+/**
+ * Save a File Entity Paths config entity.
+ *
+ * @param $config
+ *   The configuration object or array
+ *
+ * @return mixed
+ *   The saved entity or FALSE, if something is wrong.
+ */
+function fe_paths_config_save($config) {
+  if (is_array($config)) {
+    $config = (object) $config;
+  }
+  return entity_save('fe_path_config', $config);
+}
+
+function fe_paths_prepare_config(&$config) {
+  $info = entity_get_info('fe_paths_config');
+
+  foreach ($config as $key => $value) {
+    if (!in_array($key, $info['schema_fields_sql']['base table'])) {
+      unset($config[$key]);
+    }
+  }
+
+  $config = (object) $config;
+  if (!isset($config->status)) {
+    $config->status = 1;
+  }
+  dsm(get_defined_vars());
 }

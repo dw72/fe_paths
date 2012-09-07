@@ -69,6 +69,11 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
   $entities = entity_get_info();
   $file_types = array();
   $entities_array = array();
+  $token_info = token_get_info();
+
+  if (!isset($form_state['fe_path_config'])) {
+    $form_state['fe_path_config'] = $config;
+  }
 
   foreach ($file_entity_info['bundles'] as $name => $bundle) {
     $file_types[$name] = $bundle['label'];
@@ -80,6 +85,10 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
       $entities_array[$name] = $entity['label'];
     }
   }
+
+  $form['data'] = array(
+    '#type' => 'container',
+  );
 
   $form['label'] = array(
     '#type' => 'textfield',
@@ -96,6 +105,40 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     ),
   );
 
+  $form['path_name'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Path and filename settings'),
+    'path' => array(
+      '#type' => 'textfield',
+      '#title' => t("Path"),
+      '#description' => t('The path applied after the sheme://. It means, if the file has scheme "public", and this field is set as "foo", the file will be moved to the public://foo path.'),
+      //'#element_validate' => array('token_element_validate'),
+      //'#token_types' => array('file', 'file'),
+      // Tmp disable until figure out, how to get the proper directory.
+      //'#field_prefix' => variable_get('file_public_path', conf_path() . '/files') . '/',
+      '#field_prefix' => "sheme://",
+      '#default_value' => isset($config->path) ? $config->path : '',
+    ),
+    'filename' => array(
+      '#type' => 'textfield',
+      '#title' => t("Filename"),
+      '#description' => t('Set the filename pattern. This pattern will be validated based on parent entity settings. If settings is "global", all types of tokens are enabled. File tokens is always accepted.'),
+      //'#element_validate' => array('token_element_validate'),
+      //'#token_types' => array('file', 'file'),
+      '#default_value' => isset($config->filename) ? $config->filename : '[file:name-only-original].[file:extension-original]',
+    ),
+    'tokens' => array(
+      '#type' => 'fieldset',
+      '#title' => t('Replacement patterns'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#description' => theme('token_tree', array('token_types' => array_keys($entities_array))),
+      '#weight' => 1000,
+      '#prefix' => '<div id="fe-paths-tokens">',
+      '#suffix' => '</div>',
+    ),
+  );
+
   $form['file_entity'] = array(
     '#type' => 'fieldset',
     '#title' => t('File types'),
@@ -103,6 +146,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
       '#type' => 'checkboxes',
       '#options' => $file_types,
       '#description' => t('Choose, in which file types should this configuration be activated.'),
+      '#parents' => array('data', 'file_entity'),
     )
   );
 
@@ -119,7 +163,8 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
       '#ajax' => array(
         'callback' => 'fe_paths_add_bundle_settings',
         'wrapper' => 'bundle-target',
-      )
+      ),
+      '#parents' => array('data', 'entity'),
     ),
   );
 
@@ -127,6 +172,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     '#type' => 'submit',
     '#value' => t('Save configuration'),
   );
+
   return $form;
 }
 
@@ -141,7 +187,7 @@ function fe_paths_add_bundle_settings($form, $form_state) {
 
     $form['bundle'] =  array(
       '#type' => 'select',
-      '#title' => t('Bundle entity'),
+      '#title' => t('Bundle'),
       '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
       '#options' => array('global' => t('Global')) + $bundles,
       '#prefix' => '<div id="bundle-target">',
@@ -150,10 +196,21 @@ function fe_paths_add_bundle_settings($form, $form_state) {
         //'callback' => 'fe_paths_add_bundle_settings',
         //'wrapper' => 'bundle-target',
       ),
+      '#parents' => array('data'),
     );
     return $form['bundle'];
   }
   else {
     return '<div id="bundle-target"></div>';
   }
+}
+
+function fe_paths_entity_edit_form_validate($form, &$form_state) {
+
+}
+
+function fe_paths_entity_edit_form_submit($form, &$form_state) {
+  $config = $form_state['values'];
+  fe_paths_prepare_config($config);
+  fe_paths_config_save($config);
 }
