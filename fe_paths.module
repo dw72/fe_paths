@@ -5,6 +5,18 @@
  */
 
 /**
+ * Implements hook_permission().
+ */
+function fe_paths_permission() {
+  return array(
+    'administer_fe_paths' => array(
+      'title' => t('Administer File Entity Paths'),
+      'description' => t('Adminsiter File Entity Paths configuration.'),
+    ),
+  );
+}
+
+/**
  * Implements hook_menu().
  */
 function fe_paths_menu() {
@@ -40,8 +52,23 @@ function fe_paths_menu() {
       ) + $access;
     }
   }
+  $items['admin/config/media/fe-paths'] = array(
+    'title' => 'File Entity Paths settings',
+    'description' => t('Configure custom paths for file entities'),
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer_fe_paths'),
+  );
+  $items['admin/config/media/fe-paths/global'] = array(
+    'title' => 'Global',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fe_paths_admin_form'),
+    'file' => 'fe_paths.admin.inc',
+    'file path' => drupal_get_path('module', 'fe_paths') . '/includes',
+  );
   return $items;
 }
+
 
 /**
  * Get all variables defined by File Entity Paths
@@ -56,28 +83,22 @@ function fe_paths_menu() {
 function fe_paths_get_settings($file_type = NULL) {
   $settings = &drupal_static(__FUNCTION__);
 
-  if (!isset($vars)) {
+  if (!isset($settings[$file_type])) {
     $entity_info = entity_get_info('file');
     foreach ($entity_info['bundles'] as $type => $bundle_info) {
+      $defaults = array();
       if (isset($bundle_info['admin'])) {
-        $defaults = array(
-          'default' => array(
+        foreach (file_get_stream_wrappers() as $scheme => $wrapper) {
+          $defaults[$scheme] = array(
             'path' => '',
             'filename' => '[file:name-only-original].[file:extension-original]',
-          ),
-          'private' => array(
-            'path' => '',
-            'filename' => '[file:name-only-original].[file:extension-original]',
-          ),
-        );
-        $vars = variable_get("fep_$type", $defaults);
-        $settings[$type] = array(
-          'default' => $vars['default'],
-          'private' => $vars['private'],
-        );
+          );
+        }
+        $settings[$type] = variable_get("fep_$type", $defaults);
       }
     }
   }
+
   return is_null($file_type) ? $settings : $settings[$file_type];
 }
 
@@ -213,4 +234,28 @@ function fe_paths_tokens($type, $tokens, array $data = array(), array $options =
   return $replacements;
 }
 
+function fe_paths_entity_info() {
+  $return = array(
+    'fe_paths_config' => array(
+      'label' => t('File entity paths configuration'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIControllerExportable',
+      'base table' => 'fe_paths_config',
+      'fieldable' => FALSE,
+      'entity keys' => array(
+        'id' => 'id',
+        'name' => 'machine_name',
+        'label' => 'label',
+      ),
+      'module' => 'fe_paths',
+      'exportable' => TRUE,
+      'label callback' => 'entity_class_label',
+      'uri callback' => 'entity_class_uri',
+    ),
+  );
 
+  if (module_exists('entitycache')) {
+    $return['fe_paths_config']['entity cache'] = TRUE;
+  }
+
+}
