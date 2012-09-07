@@ -44,6 +44,20 @@ function fe_paths_schema() {
         'size' => 'tiny',
         'description' => 'Weight of the settings.',
       ),
+      'path' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'description' => 'The path of this config.',
+        'default' => 'unlabeled',
+      ),
+      'filename' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'description' => 'The filename of this config.',
+        'default' => 'unlabeled',
+      ),
       'data' => array(
         'type' => 'blob',
         'size' => 'big',
@@ -147,6 +161,20 @@ function fe_paths_update_7000() {
         'default' => 0,
         'size' => 'tiny',
         'description' => 'Weight of the settings.',
+      ),
+      'path' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'description' => 'The path of this config.',
+        'default' => 'unlabeled',
+      ),
+      'filename' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'description' => 'The filename of this config.',
+        'default' => 'unlabeled',
       ),
       'data' => array(
         'type' => 'blob',
