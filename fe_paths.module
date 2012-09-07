@@ -284,8 +284,25 @@ function fe_paths_config_load_multiple($ids = array('all'), $conditions = array(
     }
   }
 
-  dsm(get_defined_vars());
-  return entity_load('fe_paths_config', $ids, $conditions, $reset);
+  // Load entities
+  $entities = entity_load('fe_paths_config', $ids, $conditions, $reset);
+
+  // Prepare an empty array to short
+  $weights = array();
+  // Build sort index.
+  foreach ($entities as $id => $config) {
+    $weights[$id] = $config->weight;
+  }
+
+  asort($weights);
+
+  // Sort entities by weight.
+  $return = array();
+  foreach ($weights as $key => $weight) {
+    $return[$key] = $entities[$key];
+  }
+
+  return $return;
 }
 
 /**
