@@ -206,11 +206,20 @@ function fe_paths_add_bundle_settings($form, $form_state) {
 }
 
 function fe_paths_entity_edit_form_validate($form, &$form_state) {
-
+  $form_state['redirect'] = 'admin/config/media/fe-paths';
 }
 
 function fe_paths_entity_edit_form_submit($form, &$form_state) {
   $config = $form_state['values'];
   fe_paths_prepare_config($config);
   fe_paths_config_save($config);
+}
+
+function fe_paths_global_page() {
+  $configs = fe_paths_config_load_multiple();
+  $build = array();
+
+  $build['form'] = drupal_get_form('fe_paths_admin_form');
+  dsm(get_defined_vars());
+  return $build;
 }
