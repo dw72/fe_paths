@@ -20,55 +20,29 @@ function fe_paths_permission() {
  * Implements hook_menu().
  */
 function fe_paths_menu() {
-  // Attach a "Manage file paths" tab to each file type in the same way that
-  // Field UI attaches "Manage fields" and "Manage display" tabs. Note that
-  // Field UI does not have to be enabled; we're just using the same IA pattern
-  // here for attaching the "Manage file display" page.
-  $entity_info = entity_get_info('file');
-  foreach ($entity_info['bundles'] as $file_type => $bundle_info) {
-    if (isset($bundle_info['admin'])) {
-      // Get the base path and access.
-      $path = $bundle_info['admin']['path'];
-      $access = array_intersect_key($bundle_info['admin'], drupal_map_assoc(array('access callback', 'access arguments')));
-      $access += array(
-        'access callback' => 'user_access',
-        'access arguments' => array('administer site configuration'),
-      );
-
-      // The file type must be passed to the page callbacks. It might be
-      // configured as a wildcard (multiple file types sharing the same menu
-      // router path).
-      $file_type_argument = isset($bundle_info['admin']['bundle argument']) ? $bundle_info['admin']['bundle argument'] : $file_type;
-
-      // Add the 'Manage file paths' tab.
-      $items["$path/file-paths"] = array(
-        'title' => 'Manage file paths',
-        'page callback' => 'drupal_get_form',
-        'page arguments' => array('fe_paths_admin_form', $file_type_argument),
-        'type' => MENU_LOCAL_TASK,
-        'weight' => 5,
-        'file' => 'fe_paths.admin.inc',
-        'file path' => drupal_get_path('module', 'fe_paths') . '/includes',
-      ) + $access;
-    }
-  }
   $items['admin/config/media/fe-paths'] = array(
     'title' => 'File Entity Paths settings',
     'description' => t('Configure custom paths for file entities'),
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('administer_fe_paths'),
-  );
-  $items['admin/config/media/fe-paths/global'] = array(
-    'title' => 'Global',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fe_paths_admin_form'),
     'file' => 'fe_paths.admin.inc',
     'file path' => drupal_get_path('module', 'fe_paths') . '/includes',
   );
+  $items['admin/config/media/fe-paths/global'] = array(
+    'title' => 'Global',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -1,
+  );
+  $items['admin/config/media/fe-paths/add'] = array(
+    'title' => 'Add config',
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array('administer_fe_paths'),
+    'page arguments' => array('fe_paths_entity_edit_form'),
+  );
   return $items;
 }
-
 
 /**
  * Get all variables defined by File Entity Paths
@@ -105,12 +79,13 @@ function fe_paths_get_settings($file_type = NULL) {
 /**
  * Implements hook_file_presave().
  */
-function fe_paths_file_presave($file) {
+function fe_paths_entity_presave($entity, $type) {
   // Store original filename in the database.
-  if (empty($file->origname)) {
-    $file->origname = $file->filename;
+  if ($type == 'file' && empty($entity->origname)) {
+    $entity->origname = $entity->filename;
+    fe_paths_file_process($entity);
   }
-  fe_paths_file_process($file);
+
 }
 
 /**
@@ -118,7 +93,7 @@ function fe_paths_file_presave($file) {
  * @see fe_paths_file_presave().
  * @see fe_paths_move_files().
  */
-function fe_paths_file_process($file) {
+function fe_paths_file_process($file, $parent = NULL) {
   // Get a static of processed files to prevent infinite processing.
   $processed = &drupal_static(__FUNCTION__, array());
 
@@ -129,14 +104,8 @@ function fe_paths_file_process($file) {
     $private = $scheme == 'private' ? TRUE : FALSE;
     $old_dir_uri = str_replace('/' . $file->filename, '', $file->uri);
 
-    if ($private) {
-      $replace_path = $settings['private']['path'];
-      $replace_filename = $settings['private']['filename'];
-    }
-    else {
-      $replace_path = $settings['default']['path'];
-      $replace_filename = $settings['default']['filename'];
-    }
+    $replace_path = $settings[$scheme]['path'];
+    $replace_filename = $settings[$scheme]['filename'];
 
     // First process tokens
     $path = token_replace($replace_path, array('file' => $file, 'file'), array('clear' => TRUE));
@@ -258,4 +227,29 @@ function fe_paths_entity_info() {
     $return['fe_paths_config']['entity cache'] = TRUE;
   }
 
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function fe_paths_form_alter(&$form, &$form_state, $form_id) {
+
+}
+
+/**
+ * Check, if machine name of settings is exists.
+ *
+ * @param $machine_name
+ *   The machine name to check
+ *
+ * @return mixed
+ *  The number of rows, in which the machine name is being. Normally it could
+ *  be 0 or 1.
+ */
+function fe_paths_check_machine_name($machine_name) {
+  return db_select('fe_paths_config', 'fe')
+    ->fields('fe', array('machine_name'))
+    ->condition('machine_name', $machine_name)
+    ->execute()
+    ->rowCount();
 }

@@ -64,16 +64,96 @@ function fe_paths_admin_form($form, &$form_state) {
   return system_settings_form($form);
 }
 
-function fe_paths_entity_edit_form($form, &$form_state) {
+function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
   $file_entity_info = entity_get_info('file');
+  $entities = entity_get_info();
+  $file_types = array();
+  $entities_array = array();
+
+  foreach ($file_entity_info['bundles'] as $name => $bundle) {
+    $file_types[$name] = $bundle['label'];
+  }
+
+  foreach ($entities as $name => $entity) {
+    // Only works with fieldable entities.
+    if ($entity['fieldable']) {
+      $entities_array[$name] = $entity['label'];
+    }
+  }
+
+  $form['label'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Label'),
+    '#default_value' => isset($config->label) ? $config->label : '',
+    '#required' => TRUE,
+  );
+  $form['machine_name'] = array(
+    '#type' => 'machine_name',
+    '#title' => t('Machine name'),
+    '#default_value' => isset($config->machine_name) ? $config->machine_name : '',
+    '#machine_name' => array(
+      'exists' => 'fe_paths_check_machine_name',
+    ),
+  );
+
   $form['file_entity'] = array(
     '#type' => 'fieldset',
-    '#title' => t('File bundle'),
+    '#title' => t('File types'),
     'file_bundle' => array (
       '#type' => 'checkboxes',
-      '#options' => $file_entity_info['bundles'],
-      '#title' => t('File bundle'),
-      '#description' => t('Choose, in which file types should this settings be activated.'),
+      '#options' => $file_types,
+      '#description' => t('Choose, in which file types should this configuration be activated.'),
     )
   );
+
+  $form['parent_entity'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Parent entity settings'),
+    '#tree' => TRUE,
+    'entity' => array(
+      '#type' => 'select',
+      '#title' => t('Choose entity'),
+      '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
+      '#options' => array('global' =>t('Global')) + $entities_array,
+      '#suffix' => '<div id="bundle-target"></div>',
+      '#ajax' => array(
+        'callback' => 'fe_paths_add_bundle_settings',
+        'wrapper' => 'bundle-target',
+      )
+    ),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
+  return $form;
+}
+
+function fe_paths_add_bundle_settings($form, $form_state) {
+  if (isset($form_state['values']['parent_entity']['entity']) && $form_state['values']['parent_entity']['entity'] != 'global') {
+    $bundles = array();
+    $name = $form_state['values']['parent_entity']['entity'];
+    $entity = entity_get_info($name);
+    foreach ($entity['bundles'] as $key => $bundle) {
+      $bundles[$key] = $bundle['label'];
+    }
+
+    $form['bundle'] =  array(
+      '#type' => 'select',
+      '#title' => t('Bundle entity'),
+      '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
+      '#options' => array('global' => t('Global')) + $bundles,
+      '#prefix' => '<div id="bundle-target">',
+      '#suffix' => '</div><div id="fields-target"></div>',
+      '#ajax' => array(
+        //'callback' => 'fe_paths_add_bundle_settings',
+        //'wrapper' => 'bundle-target',
+      ),
+    );
+    return $form['bundle'];
+  }
+  else {
+    return '<div id="bundle-target"></div>';
+  }
 }
