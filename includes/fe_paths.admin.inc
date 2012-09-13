@@ -219,7 +219,95 @@ function fe_paths_global_page() {
   $configs = fe_paths_config_load_multiple();
   $build = array();
 
-  $build['form'] = drupal_get_form('fe_paths_admin_form');
-  dsm(get_defined_vars());
+  $build['config_form'] = drupal_get_form('fe_paths_config_table_form', $configs);
+  $build['global_form'] = drupal_get_form('fe_paths_admin_form');
   return $build;
+}
+
+function fe_paths_config_table_form($form, &$form_state, $configs) {
+  $form_state['configs'] = $configs;
+  $form = array(
+    'config' => array(
+      '#prefix' => '<div id="config-order-form">',
+      '#suffix' => '</div>',
+      '#tree' => TRUE,
+      '#theme' => 'fe_paths_config_table'
+    )
+  );
+  foreach ($configs as $name => $config) {
+    $form['config'][$name]['label'] = array(
+      '#markup' => check_plain($config->label),
+    );
+    $form['config'][$name]['weight'] = array(
+      '#type' => 'textfield',
+      '#default_value' => $config->weight,
+      '#size' => 3,
+      '#attributes' => array('class' => array('order-weight')),
+    );
+    $form['config'][$name]['machine_name'] = array(
+      '#markup' => check_plain($config->machine_name),
+    );
+    $form['config'][$name]['status'] = array(
+      '#markup' => $config->status ? t('Enabled') : t('Disabled'),
+    );
+    $form['config'][$name]['path'] = array(
+      '#markup' => check_plain($config->machine_name),
+    );
+    $form['config'][$name]['filename'] = array(
+      '#markup' => check_plain($config->filename),
+    );
+    $form['config'][$name]['data'] = array(
+      '#markup' => 'some data callback',
+    );
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Order'),
+  );
+
+  return $form;
+}
+
+function fe_paths_config_table_form_submit($form, &$form_state) {
+
+  foreach ($form_state['configs'] as $id => $config) {
+    $config->weight = $form_state['values']['config'][$id]['weight'];
+    fe_paths_config_save($config);
+  }
+
+  dsm(get_defined_vars());
+}
+
+function theme_fe_paths_config_table($variables) {
+  $element = $variables['element'];
+  drupal_add_tabledrag('form_id', 'order', 'sibling', 'order-weight');
+  $header = array(
+    'label' => t('Label'),
+    'weight' => t('Weight'),
+    'machine_name' => t('Machine name'),
+    'status' => t('Status'),
+    'path' => t('Path'),
+    'filename' => t('Filename'),
+    'data' => t('Settings'),
+  );
+
+  $rows = array();
+  foreach (element_children($element) as $key) {
+    $row = array();
+
+    $row['data'] = array();
+    foreach ($header as $fieldname => $title) {
+      $row['data'][] = drupal_render($element[$key][$fieldname]);
+      $row['class'] = array('draggable'); // needed for table dragging
+    }
+    $rows[] = $row;
+  }
+
+
+  return theme('table', array(
+    'header' => $header,
+    'rows' => $rows,
+    'attributes' => array('id' => 'form_id'), // needed for table dragging
+  ));
 }

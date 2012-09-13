@@ -47,6 +47,19 @@ function fe_paths_menu() {
 }
 
 /**
+ * Implements hook_theme().
+ */
+function fe_paths_theme() {
+  return array(
+    'fe_paths_config_table' => array(
+      'render element' => 'element',
+      'file' => 'fe_paths.admin.inc',
+      'path' => drupal_get_path('module', 'fe_paths') . '/includes/',
+    ),
+  );
+}
+
+/**
  * Get all variables defined by File Entity Paths
  *
  * @param $file_type
