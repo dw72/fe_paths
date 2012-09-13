@@ -52,6 +52,15 @@ function fe_paths_menu() {
     'file' => 'fe_paths.admin.inc',
     'file path' => drupal_get_path('module', 'fe_paths') . '/includes',
   );
+  $items['admin/config/media/fe-paths/%fe_paths_config/delete'] = array(
+    'title' => 'Edit configuration',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer_fe_paths'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fe_paths_config_delete_confirm', 4),
+    'file' => 'fe_paths.admin.inc',
+    'file path' => drupal_get_path('module', 'fe_paths') . '/includes',
+  );
   return $items;
 }
 

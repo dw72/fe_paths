@@ -89,8 +89,8 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
 
   if (!is_null($config)) {
     $form['id'] = array(
-      '#type' => 'hidden',
-      '#default_value' => $config->id,
+      '#type' => 'value',
+      '#value' => $config->id,
     );
   }
 
@@ -148,11 +148,14 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
   );
 
   // Fill out the default values of the file_bundle checkboxes.
-  foreach ($config->data['file_entity'] as $key => $val) {
-    if ($key === $val) {
-      $file_types_defaults[] = $key;
+  if (!is_null($config)) {
+    foreach ($config->data['file_entity'] as $key => $val) {
+      if ($key === $val) {
+        $file_types_defaults[] = $key;
+      }
     }
   }
+
 
   $form['file_entity'] = array(
     '#type' => 'fieldset',
@@ -190,7 +193,6 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     '#value' => t('Save configuration'),
   );
 
-  dsm(get_defined_vars());
   return $form;
 }
 
@@ -278,7 +280,7 @@ function fe_paths_config_table_form($form, &$form_state, $configs) {
       '#markup' => 'some data callback',
     );
     $form['config'][$name]['link'] = array(
-      '#markup' => l(t('Edit'), "admin/config/media/fe-paths/{$config->id}/edit")
+      '#markup' => l(t('Edit'), "admin/config/media/fe-paths/{$config->id}/edit") . '</br>' . l(t('Delete'), "admin/config/media/fe-paths/{$config->id}/delete"),
     );
   }
 
@@ -331,8 +333,35 @@ function theme_fe_paths_config_table($variables) {
   ));
 }
 
+/**
+ * Page callback for configuration edit page.
+ *
+ * @param $config
+ *
+ * @return array|mixed
+ */
 function fe_paths_config_edit_page($config) {
   $build = drupal_get_form('fe_paths_entity_edit_form', $config);
 
   return $build;
+}
+
+function fe_paths_config_delete_confirm($form, &$form_state, $config) {
+  $form['id'] = array('#type' => 'value', '#value' => $config->id);
+
+  return confirm_form($form,
+    t('Delete File Entity Path configuration.'),
+    'admin/config/media/fe-paths',
+    t('Are you sure you want to delete %title configuration?', array('%title' => $config->label)),
+    t('Delete'),
+    t('Cancel')
+  );
+}
+
+function fe_paths_config_delete_confirm_submit($form, &$form_state) {
+  if ($form_state['values']['confirm']) {
+    fe_paths_config_delete($form_state['values']['id']);
+    drupal_set_message(t('The configuration is deleted.'));
+  }
+  $form_state['redirect'] = 'admin/config/media/fe-paths';
 }
