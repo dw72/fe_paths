@@ -114,46 +114,79 @@ function fe_paths_get_settings($file_type = NULL) {
  */
 function fe_paths_entity_presave($entity, $type) {
   // Store original filename in the database.
-  if ($type == 'file' && empty($entity->origname)) {
-    $entity->origname = $entity->filename;
-    fe_paths_file_process($entity);
+  if ($type == 'file') {
+    if (empty($entity->origname)) {
+      $entity->origname = $entity->filename;
+    }
+    // Pass every files to process function, which is not passed yet.
+    if (!isset($entity->fe_paths_processed)) {
+      // Just for testing, in _registershutdown hard to debug.
+      fe_paths_file_process($entity);
+      //drupal_register_shutdown_function('fe_paths_file_process', $entity);
+      $entity->fe_paths_processed = TRUE;
+    }
   }
-
 }
 
 /**
- * Actually processes the files.
+ * Actually pre processes the files. Set a $file->fe_paths_processed flag on
+ * the file entity, then add to process queue. The file will be processed
+ * on drupal_register_shutdown.
+ *
  * @see fe_paths_file_presave().
- * @see fe_paths_move_files().
+ * @see fe_paths_file_process().
  */
-function fe_paths_file_process($file, $parent = NULL) {
-  // Get a static of processed files to prevent infinite processing.
-  $processed = &drupal_static(__FUNCTION__, array());
+function fe_paths_file_process($file) {
 
-  // Only work on local files, that have not been processed, and that already have a file_entity type.
-  if (file_entity_file_is_local($file) && !array_key_exists($file->origname, $processed) && isset($file->type)) {
-    $settings = fe_paths_get_settings($file->type);
-    $scheme = file_uri_scheme($file->uri);
-    $private = $scheme == 'private' ? TRUE : FALSE;
-    $old_dir_uri = str_replace('/' . $file->filename, '', $file->uri);
+  if (fe_paths_file_process_available($file)) {
+    $configs = fe_paths_config_load_multiple();
+    $file_usage = file_usage_list($file);
 
-    $replace_path = $settings[$scheme]['path'];
-    $replace_filename = $settings[$scheme]['filename'];
+    foreach ($configs as $config) {
+      $data = $config->data;
+      // First, step out, if the file types of config doesn't match.
+      if (isset($data['file_entity'][$file->type]) && $data['file_entity'][$file->type] !== $file->type) {
+        continue;
+      }
+      foreach ($file_usage as $module => $type) {
+        foreach ($type as $type_name => $entity_id) {
+          $entities = entity_load($type_name, $entity_id) ;
 
-    // First process tokens
-    $path = token_replace($replace_path, array('file' => $file, 'file'), array('clear' => TRUE));
-    $filename = token_replace($replace_filename, array('file' => $file, 'file'), array('clear' => TRUE));
-
-    $paths = $path != '' ? explode('/', $path) : NULL;
-
-    $new_uri = $scheme . '://' . $path . $filename;
-    // Move the files, if necessary
-    if ($file->uri != $new_uri) {
-      $directory = $scheme . '://' . $path;
-      drupal_register_shutdown_function('fe_paths_move_files', $directory, $file, $new_uri, $filename, $old_dir_uri);
+          foreach ($entities as $id => $entity) {
+            dsm(get_defined_vars());
+          }
+        }
+      }
     }
-    $processed[$file->origname] = TRUE;
   }
+}
+
+/**
+ * Function to decide, if a file is available for File Entity Paths processing.
+ *
+ * @param $file
+ *
+ * @return bool
+ */
+function fe_paths_file_process_available($file) {
+  $return = FALSE;
+  if (!file_entity_file_is_local($file)) {
+    return FALSE;
+  }
+
+  // @todo: is this exists in this structure? We just try it.
+  if (!isset($file->type)) {
+    watchdog('File Entity devel helper', t('<em>!isset($file->type)</em> condition was marked as removable in File Entity Paths module. If you still see this message in log, please let me know in <a href="http://drupal.org/node/1783934">Check whether all condition need in the fe_paths_file_process_available()</a> issue.'));
+    return FALSE;
+  }
+
+  // If still in this function, set return value to TRUE
+  $return = TRUE;
+  // Clone the original file to pass as none alterable argument
+  $clone = clone($file);
+  // Let other modules to set $return to FALSE.
+  drupal_alter('fe_paths_file_process_available', $return, $clone);
+  return $return;
 }
 
 /**
