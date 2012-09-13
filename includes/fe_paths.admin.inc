@@ -68,6 +68,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
   $file_entity_info = entity_get_info('file');
   $entities = entity_get_info();
   $file_types = array();
+  $file_types_defaults = array();
   $entities_array = array();
   $token_info = token_get_info();
 
@@ -84,6 +85,13 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     if ($entity['fieldable']) {
       $entities_array[$name] = $entity['label'];
     }
+  }
+
+  if (!is_null($config)) {
+    $form['id'] = array(
+      '#type' => 'hidden',
+      '#default_value' => $config->id,
+    );
   }
 
   $form['data'] = array(
@@ -139,6 +147,13 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     ),
   );
 
+  // Fill out the default values of the file_bundle checkboxes.
+  foreach ($config->data['file_entity'] as $key => $val) {
+    if ($key === $val) {
+      $file_types_defaults[] = $key;
+    }
+  }
+
   $form['file_entity'] = array(
     '#type' => 'fieldset',
     '#title' => t('File types'),
@@ -147,8 +162,10 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
       '#options' => $file_types,
       '#description' => t('Choose, in which file types should this configuration be activated.'),
       '#parents' => array('data', 'file_entity'),
-    )
+      '#default_value' => $file_types_defaults,
+    ),
   );
+
 
   $form['parent_entity'] = array(
     '#type' => 'fieldset',
@@ -173,6 +190,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     '#value' => t('Save configuration'),
   );
 
+  dsm(get_defined_vars());
   return $form;
 }
 
@@ -259,6 +277,9 @@ function fe_paths_config_table_form($form, &$form_state, $configs) {
     $form['config'][$name]['data'] = array(
       '#markup' => 'some data callback',
     );
+    $form['config'][$name]['link'] = array(
+      '#markup' => l(t('Edit'), "admin/config/media/fe-paths/{$config->id}/edit")
+    );
   }
 
   $form['submit'] = array(
@@ -270,13 +291,10 @@ function fe_paths_config_table_form($form, &$form_state, $configs) {
 }
 
 function fe_paths_config_table_form_submit($form, &$form_state) {
-
   foreach ($form_state['configs'] as $id => $config) {
     $config->weight = $form_state['values']['config'][$id]['weight'];
     fe_paths_config_save($config);
   }
-
-  dsm(get_defined_vars());
 }
 
 function theme_fe_paths_config_table($variables) {
@@ -290,6 +308,7 @@ function theme_fe_paths_config_table($variables) {
     'path' => t('Path'),
     'filename' => t('Filename'),
     'data' => t('Settings'),
+    'link' => t('Edit'),
   );
 
   $rows = array();
@@ -310,4 +329,10 @@ function theme_fe_paths_config_table($variables) {
     'rows' => $rows,
     'attributes' => array('id' => 'form_id'), // needed for table dragging
   ));
+}
+
+function fe_paths_config_edit_page($config) {
+  $build = drupal_get_form('fe_paths_entity_edit_form', $config);
+
+  return $build;
 }

@@ -43,6 +43,15 @@ function fe_paths_menu() {
     'file' => 'fe_paths.admin.inc',
     'file path' => drupal_get_path('module', 'fe_paths') . '/includes',
   );
+  $items['admin/config/media/fe-paths/%fe_paths_config/edit'] = array(
+    'title' => 'Edit configuration',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer_fe_paths'),
+    'page callback' => 'fe_paths_config_edit_page',
+    'page arguments' => array(4),
+    'file' => 'fe_paths.admin.inc',
+    'file path' => drupal_get_path('module', 'fe_paths') . '/includes',
+  );
   return $items;
 }
 
@@ -330,8 +339,8 @@ function fe_paths_config_load_multiple($ids = array('all'), $conditions = array(
  *   The File Entity Paths config if loaded successful else FALSE.
  */
 function fe_paths_config_load($id, $reset = FALSE) {
-  $object = fe_paths_config_delete_multiple(array($id), array(), $reset);
-  return isset($object['id']) ? isset($object['id']) : FALSE;
+  $object = fe_paths_config_load_multiple(array($id), array(), $reset);
+  return isset($object[$id]) ? $object[$id] : FALSE;
 }
 
 /**
