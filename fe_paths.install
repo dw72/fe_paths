@@ -130,22 +130,43 @@ function fe_paths_schema_alter(&$schema) {
 }
 
 /**
+ * Implements hook_requirements().
+ */
+function fe_paths_requirements($phase) {
+  // filefield_paths and fe_paths can't work together, no let install the module
+  if ($phase == 'update' || $phase == 'install') {
+    if (module_exists('filefield_paths') || drupal_get_installed_schema_version('filefield_paths') == SCHEMA_UNINSTALLED) {
+      $t = get_t();
+      return array(
+        'fe_paths' => array(
+          'title' => $t('File Entity Paths status.'),
+          'value' => '',
+          'description' => $t('The File Entity Paths can\'t work with File (Field) Paths together. You have to disable and uninstall it first.'),
+          'severity' => REQUIREMENT_ERROR,
+        ),
+      );
+    }
+  }
+}
+
+/**
  * Implements hook_install().
  */
 function fe_paths_install() {
   // Add origname field to {file_managed}, and populate with the current
   // filenames.
-  db_add_field('file_managed', 'origname', array(
-    'description' => 'Original name of the file with no path components. Used by the fe_paths module.',
-    'type' => 'varchar',
-    'length' => 255,
-    'not null' => TRUE,
-    'default' => '',
-  ));
-  db_update('file_managed')
-    ->expression('origname', 'filename')
-    ->execute();
-
+  if (!module_exists('filefield_paths') && drupal_get_installed_schema_version('filefield_paths') == SCHEMA_UNINSTALLED) {
+    db_add_field('file_managed', 'origname', array(
+      'description' => 'Original name of the file with no path components. Used by the fe_paths module.',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    ));
+    db_update('file_managed')
+      ->expression('origname', 'filename')
+      ->execute();
+  }
   // Set the weight to 1.
   db_update('system')
     ->fields(array('weight' => 1))
@@ -158,10 +179,13 @@ function fe_paths_install() {
  * Implements hook_uninstall().
  */
 function fe_paths_uninstall() {
-  db_drop_field('file_managed', 'origname');
-  // Need to 'Column not found:' error message after uninstall module.
-  cache_clear_all();
-  registry_rebuild();
+  if (!module_exists('filefield_paths') && drupal_get_installed_schema_version('filefield_paths') == SCHEMA_UNINSTALLED) {
+    db_drop_field('file_managed', 'origname');
+    // Need to 'Column not found:' error message after uninstall module.
+    cache_clear_all();
+    entity_info_cache_clear();
+    registry_rebuild();
+  }
 }
 
 /**
