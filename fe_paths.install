@@ -135,7 +135,7 @@ function fe_paths_schema_alter(&$schema) {
 function fe_paths_requirements($phase) {
   // filefield_paths and fe_paths can't work together, no let install the module
   if ($phase == 'update' || $phase == 'install') {
-    if (module_exists('filefield_paths') || drupal_get_installed_schema_version('filefield_paths') == SCHEMA_UNINSTALLED) {
+    if (module_exists('filefield_paths') || drupal_get_installed_schema_version('filefield_paths') != SCHEMA_UNINSTALLED) {
       $t = get_t();
       return array(
         'fe_paths' => array(

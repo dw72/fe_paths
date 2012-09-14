@@ -130,8 +130,6 @@ function fe_paths_entity_presave($entity, $type) {
     // for processing.
     foreach ($fields as $field) {
       if (in_array($field['widget']['type'], $allowed_types) && $files = field_get_items($type, $entity, $field['field_name'])) {
-
-
         foreach ($files as $file) {
           // Just for testing, in _registershutdown hard to debug.
           fe_paths_file_process(file_load($file['fid']), $entity, $type);
