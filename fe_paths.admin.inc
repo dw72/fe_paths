@@ -198,7 +198,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
 
   if (isset($config->data['entity'])) {
     $bundles = fe_paths_get_bundle_names($config->data['entity']);
-    if (!(count($bundles) == 1 && array_key_exists($config->data['entity'], $bundles))) {
+    if (fe_paths_have_valid_bundle($config->data['entity'])) {
       $form['parent_entity']['bundle'] = array(
         '#type' => 'select',
         '#title' => t('Bundle'),
@@ -257,7 +257,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
 function fe_paths_add_bundle_settings($form, $form_state) {
   if (isset($form_state['values']['data']['entity']) && $form_state['values']['parent_entity']['entity'] != 'global') {
     $bundles = fe_paths_get_bundle_names($form_state['values']['data']['entity']);
-    if (!(count($bundles) == 1 && array_key_exists($form_state['values']['data']['entity'], $bundles))) {
+    if (fe_paths_have_valid_bundle($form_state['values']['data']['entity'])) {
       $form['bundle'] = array(
         '#type' => 'select',
         '#title' => t('Bundle'),
