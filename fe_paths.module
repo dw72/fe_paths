@@ -141,6 +141,13 @@ function fe_paths_entity_presave($entity, $type) {
   }
 }
 
+/**
+ * Implements hook_file_delete().
+ */
+function fe_paths_file_delete($file) {
+  fe_paths_usage_delete($file->fid);
+}
+
 /********************************
  *    Main process functions    *
  ********************************/
@@ -187,14 +194,18 @@ function fe_paths_file_process($file, $entity, $type) {
       }
       // The configuration match, so build variables for file moving.
       $match = TRUE;
-      fe_paths_move_file($file, $config->path, $config->filename, $type, $entity);
+      if (fe_paths_move_file($file, $config->path, $config->filename, $type, $entity)) {
+        fe_paths_usage_add($file->fid, $type, $entity->nid, $config->id);
+      };
     }
     if (!$match) {
       // If no matches, process with the default configuration.
       $settings = fe_paths_get_settings($file->type);
       $scheme = file_uri_scheme($file->uri);
 
-      fe_paths_move_file($file, $settings[$scheme]['path'], $settings[$scheme]['filename'], 'file');
+      if (fe_paths_move_file($file, $settings[$scheme]['path'], $settings[$scheme]['filename'], 'file')) {
+        fe_paths_usage_add($file->fid, 'file', $file->fid, 0);
+      }
     }
   }
 }
@@ -229,6 +240,14 @@ function fe_paths_move_file($file, $replace_path, $replace_filename, $token_type
     if (file_exists($old_dir_uri) && empty($files)) {
       drupal_rmdir($old_dir_uri);
     }
+    // Because of file_move works with a cloned $file object, need to update
+    // this $file object.
+    $file->filename = $filename;
+    $file->uri = $new_uri;
+    return $file;
+  }
+  else {
+    return FALSE;
   }
 }
 
@@ -400,18 +419,29 @@ function fe_paths_prepare_config(&$config) {
  * File Entity Path usage CRUD  *
  ********************************/
 
-function fe_paths_usage_add($fid, $entity_type, $entity_id, $id) {
+/**
+ * Add or update a fe_paths usage record to the database.
+ *
+ * @param null $fid
+ * @param $entity_type
+ * @param $entity_id
+ * @param $id
+ */
+function fe_paths_usage_add($fid = NULL, $entity_type, $entity_id, $id) {
+  $data = array(
+    'fid' => $fid,
+    'entity_type' => $entity_type,
+    'entity_id' => $entity_id,
+    'id' => $id,
+  );
+
+
   if (!fe_paths_usage($fid)) {
-    $data = array(
-      'fid' => $fid,
-      'entity_type' => $entity_type,
-      'entity_id' => $entity_id,
-      'id' => $id,
-    );
-    return drupal_write_record('fe_paths_usage', $date);
+    drupal_write_record('fe_paths_usage', $data);
   }
+
   else {
-    return db_update('fe_paths_usage')
+    db_update('fe_paths_usage')
       ->fields(
         array(
           'entity_type' => $entity_type,
@@ -424,12 +454,27 @@ function fe_paths_usage_add($fid, $entity_type, $entity_id, $id) {
   }
 }
 
+/**
+ * Delete a record from the fe_paths_usage table.
+ * @param $fid
+ *
+ * @return DatabaseStatementInterface
+ */
 function fe_paths_usage_delete($fid) {
-  return db_delete('fe_paths_usage')
+  db_delete('fe_paths_usage')
     ->condition('fid', $fid)
     ->execute();
 }
 
+/**
+ * Get a file File Entity Paths configuration usage. It determine, which
+ * configuration, by which entity is applied on the file.
+ *
+ * @param $fid
+ * @param bool $reset
+ *
+ * @return bool
+ */
 function fe_paths_usage($fid, $reset = FALSE) {
   $usage = drupal_static(__FUNCTION__);
 
@@ -441,15 +486,15 @@ function fe_paths_usage($fid, $reset = FALSE) {
     ->fields('fep')
     ->condition('fid', $fid)
     ->execute()
-    ->fetchCol();
+    ->fetchAllAssoc('fid');
 
   if (!$result) {
     return FALSE;
   }
   else {
-    $usage[$fid] = $result;
+    $usage[$fid] = $result[$fid];
   }
-  return $result[$fid];
+  return $usage[$fid];
 }
 
 /********************************
