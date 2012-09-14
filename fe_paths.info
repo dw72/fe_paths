@@ -2,7 +2,7 @@ name = File Entity Paths
 description = Adds per bundle Token based file sorting and renaming functionalities for file entities
 dependencies[] = token
 dependencies[] = entity
-dependencies[] = file_entity
+dependencies[] = file_entity (>=7.x-2.0-unstable6)
 package = Media
 core = 7.x
 configure = admin/config/media/fe-paths
