@@ -512,6 +512,7 @@ function fe_paths_get_allowed_widget_types($entity) {
   $allowed = array(
     'image_image',
     'file_file',
+    'media_generic',
   );
 
   drupal_alter($allowed, $entity);
