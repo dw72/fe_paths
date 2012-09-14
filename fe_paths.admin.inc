@@ -198,19 +198,26 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
 
   if (isset($config->data['entity'])) {
     $bundles = fe_paths_get_bundle_names($config->data['entity']);
-    $form['parent_entity']['bundle'] = array(
-      '#type' => 'select',
-      '#title' => t('Bundle'),
-      '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
-      '#options' => array('global' => t('Global')) + $bundles,
-      '#prefix' => '<div id="bundle-target">',
-      '#suffix' => '</div><div id="fields-target"></div>',
-      '#ajax' => array(//'callback' => 'fe_paths_add_field_settings',
-        //'wrapper' => 'field-target',
-      ),
-      '#parents' => array('data', 'bundle'),
-      '#default_value' => isset($config->data['bundle']) ? $config->data['bundle'] : 'global',
-    );
+    if (!(count($bundles) == 1 && array_key_exists($config->data['entity'], $bundles))) {
+      $form['parent_entity']['bundle'] = array(
+        '#type' => 'select',
+        '#title' => t('Bundle'),
+        '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
+        '#options' => array('global' => t('Global')) + $bundles,
+        '#prefix' => '<div id="bundle-target">',
+        '#suffix' => '</div><div id="fields-target"></div>',
+        '#ajax' => array( //'callback' => 'fe_paths_add_field_settings',
+          //'wrapper' => 'field-target',
+        ),
+        '#parents' => array('data', 'bundle'),
+        '#default_value' => isset($config->data['bundle']) ? $config->data['bundle'] : 'global',
+      );
+    }
+    else {
+      $form['parent_entity']['bundle'] = array(
+        '#markup' => '<div id="bundle-target"></div>',
+      );
+    }
   }
 
   $form['submit'] = array(
@@ -224,20 +231,24 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
 function fe_paths_add_bundle_settings($form, $form_state) {
   if (isset($form_state['values']['data']['entity']) && $form_state['values']['parent_entity']['entity'] != 'global') {
     $bundles = fe_paths_get_bundle_names($form_state['values']['data']['entity']);
-    $form['bundle'] =  array(
-      '#type' => 'select',
-      '#title' => t('Bundle'),
-      '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
-      '#options' => array('global' => t('Global')) + $bundles,
-      '#prefix' => '<div id="bundle-target">',
-      '#suffix' => '</div><div id="fields-target"></div>',
-      '#ajax' => array(
-        //'callback' => 'fe_paths_add_bundle_settings',
-        //'wrapper' => 'bundle-target',
-      ),
-      '#parents' => array('data', 'bundle'),
-    );
-    return $form['bundle'];
+    if (!(count($bundles) == 1 && array_key_exists($form_state['values']['data']['entity'], $bundles))) {
+      $form['bundle'] = array(
+        '#type' => 'select',
+        '#title' => t('Bundle'),
+        '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
+        '#options' => array('global' => t('Global')) + $bundles,
+        '#prefix' => '<div id="bundle-target">',
+        '#suffix' => '</div><div id="fields-target"></div>',
+        '#ajax' => array(//'callback' => 'fe_paths_add_bundle_settings',
+          //'wrapper' => 'bundle-target',
+        ),
+        '#parents' => array('data', 'bundle'),
+      );
+      return $form['bundle'];
+    }
+    else {
+      return '<div id="bundle-target"></div>';
+    }
   }
   else {
     return '<div id="bundle-target"></div>';
@@ -308,7 +319,7 @@ function fe_paths_config_table_form($form, &$form_state, $configs) {
       '#markup' => check_plain($config->filename),
     );
     $form['config'][$name]['data'] = array(
-      '#markup' => 'some data callback',
+      '#markup' => theme('fe_paths_config_data', array('config' => $config)),
     );
     $form['config'][$name]['link'] = array(
       '#markup' => l(t('Edit'), "admin/config/media/fe-paths/{$config->id}/edit") . '</br>' . l(t('Delete'), "admin/config/media/fe-paths/{$config->id}/delete"),
