@@ -197,22 +197,20 @@ function fe_paths_file_process($file, $entity, $type) {
         }
       }
       // The configuration match, so build variables for file moving.
-
-      dsm(get_defined_vars());
       $match = TRUE;
-      fe_paths_file_move($file, $config->path, $config->filename, $type, $entity);
+      fe_paths_move_file($file, $config->path, $config->filename, $type, $entity);
     }
     if (!$match) {
       // If no matches, process with the default configuration.
       $settings = fe_paths_get_settings($file->type);
       $scheme = file_uri_scheme($file->uri);
 
-      fe_paths_file_move($file, $settings[$scheme]['path'], $settings[$scheme]['filename'], 'file');
+      fe_paths_move_file($file, $settings[$scheme]['path'], $settings[$scheme]['filename'], 'file');
     }
   }
 }
 
-function fe_paths_file_move($file, $replace_path, $replace_filename, $token_type, $entity = NULL) {
+function fe_paths_move_file($file, $replace_path, $replace_filename, $token_type, $entity = NULL) {
   $scheme = file_uri_scheme($file->uri);
   $old_dir_uri = str_replace('/' . $file->filename, '', $file->uri);
 
@@ -237,17 +235,12 @@ function fe_paths_file_move($file, $replace_path, $replace_filename, $token_type
   // Create directory, if necessary.
   file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
   if (file_move($file, $new_uri)) {
-    // Because of file_move works with a cloned $file object, need to update
-    // this $file object.
-    //$file->filename = $filename;
-    //$file->uri = $new_uri;
     // Check, if directory is empty, and delete it, if yes
     $files = file_scan_directory($old_dir_uri, '/.*/');
     if (file_exists($old_dir_uri) && empty($files)) {
       drupal_rmdir($old_dir_uri);
     }
   }
-  dsm(get_defined_vars());
 }
 
 /**
@@ -285,26 +278,6 @@ function fe_paths_file_process_available($file) {
   drupal_alter('fe_paths_file_process_available', $return, $clone);
   return $return;
 }
-
-/**
- * A function that can be called in the page shutdown to actually move files. Not safe against recursion.
- */
-function fe_paths_move_files($directory, $file, $new_uri, $filename, $old_dir_uri) {
-  // Create directory, if necessary.
-  file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
-  if (file_move($file, $new_uri)) {
-    // Because of file_move works with a cloned $file object, need to update
-    // this $file object.
-    $file->filename = $filename;
-    $file->uri = $new_uri;
-
-    // Check, if directory is empty, and delete it, if yes
-    $files = file_scan_directory($old_dir_uri, '/.*/');
-    if (file_exists($old_dir_uri) && empty($files)) {
-      drupal_rmdir($old_dir_uri);
-     }
-   }
- }
 
 /**
  * Implements hook_token_info().
