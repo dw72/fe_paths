@@ -77,7 +77,40 @@ function fe_paths_schema() {
       'machine_name' => array('machine_name'),
     ),
   );
-  
+
+  $schema['fe_paths_usage'] = array(
+    'description' => 'Table definition for fe_paths usage schema. ',
+    'fields' => array(
+      'fid' => array(
+        'description' => 'File ID.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'entity_type' => array(
+        'description' => 'The name of the entity type in which the file is used.',
+        'type' => 'varchar',
+        'length' => '64',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'entity_id' => array(
+        'description' => 'The primary key of the entity using the file.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'id' => array(
+        'description' => 'The unique identifier for config.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('fid'),
+  );
   return $schema;
 }
 /**
@@ -132,78 +165,21 @@ function fe_paths_uninstall() {
 }
 
 /**
- * Implements hook_update_N();
+ * Implements hook_update_7000();
  *
  * Create missing database table to store fe_paths configuration.
  */
 function fe_paths_update_7000() {
-  $schema['fe_paths_config'] = array(
-    'description' => 'Table definition for fe_paths config entity schema. ',
-    'fields' => array(
-      'id' => array(
-        'description' => 'The unique identifier for config.',
-        'not null' => TRUE,
-        'type' => 'serial',
-      ),
-      'machine_name' => array(
-        'type' => 'varchar',
-        'length' => '64',
-        'not null' => TRUE,
-        'description' => 'The machine name of the configuration.',
-      ),
-      'label' => array(
-        'type' => 'varchar',
-        'length' => '255',
-        'not null' => TRUE,
-        'description' => 'The label of the configuration.',
-        'default' => 'unlabeled',
-      ),
-      'module' => array(
-        'description' => 'The name of the providing module if the entity has been defined in code.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-      ),
-      'status' => array(
-        'description' => 'Boolean indicating whether the configuration is active. (Need for exportables.)',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 1,
-      ),
-      'weight' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-        'size' => 'tiny',
-        'description' => 'Weight of the settings.',
-      ),
-      'path' => array(
-        'type' => 'varchar',
-        'length' => '255',
-        'not null' => TRUE,
-        'description' => 'The path of this config.',
-        'default' => 'unlabeled',
-      ),
-      'filename' => array(
-        'type' => 'varchar',
-        'length' => '255',
-        'not null' => TRUE,
-        'description' => 'The filename of this config.',
-        'default' => 'unlabeled',
-      ),
-      'data' => array(
-        'type' => 'blob',
-        'size' => 'big',
-        'not null' => FALSE,
-        'serialize' => TRUE,
-        'description' => 'The configuration data, serialized.',
-      ),
-    ),
-    'primary key' => array('id'),
-    'unique keys' => array(
-      'machine_name' => array('machine_name'),
-    ),
-  );
-  db_create_table('fe_paths_config', $schema['fe_paths_config']);
+  db_create_table('fe_paths_config', drupal_get_schema('fe_paths_config'));
+  return t('The table for configuration created successful.');
+}
+
+/**
+ * Implements hook_update_7001();
+ *
+ * Create missing database table to store fe_paths configuration usage.
+ */
+function fe_paths_update_7001() {
+  db_create_table('fe_paths_usage', drupal_get_schema('fe_paths_usage'));
   return t('The table for configuration created successful.');
 }
