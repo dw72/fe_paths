@@ -217,21 +217,11 @@ function fe_paths_file_process($file, $entity, $type) {
         }
       }
 
-      $match = TRUE;
       // Store, which configuration with which entity moves the file.
       if (fe_paths_move_file($file, $config->path, $config->filename, $type, $entity)) {
+        $match = TRUE;
         fe_paths_usage_add($file->fid, $type, $entity->{$entity_info['entity keys']['id']}, $config->id);
       };
-    }
-    if (!$match) {
-      // If no matches, process with the default configuration.
-      $settings = fe_paths_get_settings($file->type);
-      $scheme = file_uri_scheme($file->uri);
-
-      // Store, which configuration with which entity moves the file.
-      if (fe_paths_move_file($file, $settings[$scheme]['path'], $settings[$scheme]['filename'], 'file')) {
-        fe_paths_usage_add($file->fid, 'file', $file->fid, 0);
-      }
     }
   }
 }
