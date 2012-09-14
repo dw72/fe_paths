@@ -123,7 +123,15 @@ function fe_paths_entity_presave($entity, $type) {
   elseif (!isset($entity->fe_paths_processed) && array_key_exists($type, fe_paths_get_fieldable_entities())) {
     $entity_info = entity_get_info($type);
     // Get all fields of the saved entity.
-    $fields = field_info_instances($type, $entity->{$entity_info['bundle keys']['bundle']});
+    $bundle = NULL;
+    if (isset($entity_info['bundle keys']['bundle'])) {
+      $bundle = $entity->{$entity_info['bundle keys']['bundle']};
+    }
+    else {
+      $bundle = $type;
+    }
+
+    $fields = field_info_instances($type, $bundle);
     // Get all allowed widgets, which need to be processed
     $allowed_types = fe_paths_get_allowed_widget_types($entity);
     // Let's collect all processable fields, and add it to register_shutdown
@@ -163,12 +171,29 @@ function fe_paths_file_delete($file) {
 function fe_paths_file_process($file, $entity, $type) {
   if (fe_paths_file_process_available($file)) {
     $configs = fe_paths_config_load_multiple();
+    fe_paths_add_global_settings_to_config($configs, $file);
     $entity_info = entity_get_info($type);
-    $match = FALSE;
+    $match = FALSE; // Variable to track, if we reach the correct config.
+    $move = FALSE; // Variable to set, whether real filemove is necessary.
+    $fe_paths_usage = fe_paths_usage($file->fid);
+    $bundle = NULL;
+
+    if (isset($entity_info['bundle keys']['bundle'])) {
+      $bundle = $entity->{$entity_info['bundle keys']['bundle']};
+    }
+    else {
+      $bundle = $type;
+    }
 
     foreach ($configs as $config) {
-      // If we have matches, no need to check more config, we have result.
-      if (!empty($matches)) {
+      // If we have match, no need to check more config, we have result.
+      if ($match) {
+        break;
+      }
+
+      // We reach the existing used config, n
+      if ($fe_paths_usage && $config->id == $fe_paths_usage->id) {
+        $match = TRUE;
         break;
       }
       $data = $config->data;
@@ -184,10 +209,10 @@ function fe_paths_file_process($file, $entity, $type) {
 
       // Investigation of bundle settings. It's neccessary if data contains
       // bundle settings and the entity has bundle definition.
-      if (isset($data['bundle']) && isset($entity_info['bundle keys']['bundle'])) {
+      if (isset($data['bundle'])) {
         // Doesn't match, if the bundle value is not global, or the entity
         // has different bundle, then the settings.
-        if ($data['bundle'] != 'global' && $data['bundle'] != $entity->{$entity_info['bundle keys']['bundle']}) {
+        if ($data['bundle'] != 'global' && $data['bundle'] != $bundle) {
           continue;
         }
       }
@@ -550,6 +575,24 @@ function fe_paths_get_settings($file_type = NULL) {
   }
 
   return is_null($file_type) ? $settings : $settings[$file_type];
+}
+
+/**
+ * Add default configuration based on file to the end of the loaded
+ * configurations.
+ *
+ * @param $config
+ * @param $file
+ */
+function fe_paths_add_global_settings_to_config(&$config, $file) {
+  $settings = fe_paths_get_settings($file->type);
+  $scheme = file_uri_scheme($file->uri);
+  $object = new stdClass();
+  $object->id = 0;
+  $object->path = $settings[$scheme]['path'];
+  $object->filename = $settings[$scheme]['filename'];
+  $object->data = array();
+  $config[] = $object;
 }
 
 /**
