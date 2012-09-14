@@ -186,7 +186,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
       '#title' => t('Choose entity'),
       '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
       '#options' => array('global' =>t('Global')) + $entities,
-      '#suffix' => '<div id="bundle-target"></div>',
+      '#suffix' => isset($config->data['bundle']) ? '' : '<div id="bundle-target"></div>',
       '#ajax' => array(
         'callback' => 'fe_paths_add_bundle_settings',
         'wrapper' => 'bundle-target',
@@ -195,6 +195,23 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
       '#default_value' => isset($config->data['entity']) ? $config->data['entity'] : 'global',
     ),
   );
+
+  if (isset($config->data['entity'])) {
+    $bundles = fe_paths_get_bundle_names($config->data['entity']);
+    $form['parent_entity']['bundle'] = array(
+      '#type' => 'select',
+      '#title' => t('Bundle'),
+      '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
+      '#options' => array('global' => t('Global')) + $bundles,
+      '#prefix' => '<div id="bundle-target">',
+      '#suffix' => '</div><div id="fields-target"></div>',
+      '#ajax' => array(//'callback' => 'fe_paths_add_field_settings',
+        //'wrapper' => 'field-target',
+      ),
+      '#parents' => array('data', 'bundle'),
+      '#default_value' => isset($config->data['bundle']) ? $config->data['bundle'] : 'global',
+    );
+  }
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -205,14 +222,8 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
 }
 
 function fe_paths_add_bundle_settings($form, $form_state) {
-  if (isset($form_state['values']['parent_entity']['entity']) && $form_state['values']['parent_entity']['entity'] != 'global') {
-    $bundles = array();
-    $name = $form_state['values']['parent_entity']['entity'];
-    $entity = entity_get_info($name);
-    foreach ($entity['bundles'] as $key => $bundle) {
-      $bundles[$key] = $bundle['label'];
-    }
-
+  if (isset($form_state['values']['data']['entity']) && $form_state['values']['parent_entity']['entity'] != 'global') {
+    $bundles = fe_paths_get_bundle_names($form_state['values']['data']['entity']);
     $form['bundle'] =  array(
       '#type' => 'select',
       '#title' => t('Bundle'),
@@ -224,7 +235,7 @@ function fe_paths_add_bundle_settings($form, $form_state) {
         //'callback' => 'fe_paths_add_bundle_settings',
         //'wrapper' => 'bundle-target',
       ),
-      '#parents' => array('data'),
+      '#parents' => array('data', 'bundle'),
     );
     return $form['bundle'];
   }

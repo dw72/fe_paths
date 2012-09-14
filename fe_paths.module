@@ -201,6 +201,7 @@ function fe_paths_file_process($file, $entity, $type) {
       if (isset($data['file_entity'][$file->type]) && $data['file_entity'][$file->type] !== $file->type) {
         continue;
       }
+
       // If the processed entity has different type then this config, or the
       // config settings is not global skip.
       if (isset($data['entity']) && $data['entity'] != $type && $data['entity'] != 'global') {
@@ -620,4 +621,19 @@ function fe_paths_get_fieldable_entities() {
   }
 
   return $return;
+}
+
+/**
+ * Get all bundle of an entity type.
+ * @param $entity_tyoe
+ *
+ * @return mixed
+ */
+function fe_paths_get_bundle_names($entity_type) {
+  $entity = entity_get_info($entity_type);
+  $bundles = array();
+  foreach ($entity['bundles'] as $key => $bundle) {
+    $bundles[$key] = $bundle['label'];
+  }
+  return $bundles;
 }
