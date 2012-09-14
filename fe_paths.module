@@ -27,7 +27,6 @@ function fe_paths_menu() {
     'access arguments' => array('administer_fe_paths'),
     'page callback' => 'fe_paths_global_page',
     'file' => 'fe_paths.admin.inc',
-    'file path' => drupal_get_path('module', 'fe_paths') . '/includes',
   );
   $items['admin/config/media/fe-paths/global'] = array(
     'title' => 'Global',
@@ -41,7 +40,6 @@ function fe_paths_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fe_paths_entity_edit_form'),
     'file' => 'fe_paths.admin.inc',
-    'file path' => drupal_get_path('module', 'fe_paths') . '/includes',
   );
   $items['admin/config/media/fe-paths/%fe_paths_config/edit'] = array(
     'title' => 'Edit configuration',
@@ -50,7 +48,6 @@ function fe_paths_menu() {
     'page callback' => 'fe_paths_config_edit_page',
     'page arguments' => array(4),
     'file' => 'fe_paths.admin.inc',
-    'file path' => drupal_get_path('module', 'fe_paths') . '/includes',
   );
   $items['admin/config/media/fe-paths/%fe_paths_config/delete'] = array(
     'title' => 'Edit configuration',
@@ -59,9 +56,16 @@ function fe_paths_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('fe_paths_config_delete_confirm', 4),
     'file' => 'fe_paths.admin.inc',
-    'file path' => drupal_get_path('module', 'fe_paths') . '/includes',
   );
   return $items;
+}
+
+
+/**
+ * Implements hook_form_alter().
+ */
+function fe_paths_form_alter(&$form, &$form_state, $form_id) {
+  //dsm($form_id);
 }
 
 /**
@@ -72,41 +76,38 @@ function fe_paths_theme() {
     'fe_paths_config_table' => array(
       'render element' => 'element',
       'file' => 'fe_paths.admin.inc',
-      'path' => drupal_get_path('module', 'fe_paths') . '/includes/',
     ),
   );
 }
 
 /**
- * Get all variables defined by File Entity Paths
- *
- * @param $file_type
- *   The bundle name of file, eg. image, application
- *
- * @return $settings
- *   An array of variables.If $file_type set, only returns the settings of
- *   $file_type
+ * Implements hook_entity_info().
  */
-function fe_paths_get_settings($file_type = NULL) {
-  $settings = &drupal_static(__FUNCTION__);
+function fe_paths_entity_info() {
+  $return = array(
+    'fe_paths_config' => array(
+      'label' => t('File entity paths configuration'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIControllerExportable',
+      'base table' => 'fe_paths_config',
+      'fieldable' => FALSE,
+      'entity keys' => array(
+        'id' => 'id',
+        'name' => 'machine_name',
+        'label' => 'label',
+      ),
+      'module' => 'fe_paths',
+      'exportable' => TRUE,
+      'label callback' => 'entity_class_label',
+      'uri callback' => 'entity_class_uri',
+    ),
+  );
 
-  if (!isset($settings[$file_type])) {
-    $entity_info = entity_get_info('file');
-    foreach ($entity_info['bundles'] as $type => $bundle_info) {
-      $defaults = array();
-      if (isset($bundle_info['admin'])) {
-        foreach (file_get_stream_wrappers() as $scheme => $wrapper) {
-          $defaults[$scheme] = array(
-            'path' => '',
-            'filename' => '[file:name-only-original].[file:extension-original]',
-          );
-        }
-        $settings[$type] = variable_get("fep_$type", $defaults);
-      }
-    }
+  if (module_exists('entitycache')) {
+    $return['fe_paths_config']['entity cache'] = TRUE;
   }
 
-  return is_null($file_type) ? $settings : $settings[$file_type];
+  return $return;
 }
 
 /**
@@ -142,20 +143,10 @@ function fe_paths_entity_presave($entity, $type) {
   }
 }
 
-/**
- * @param $entity
- *
- * @return array
- */function fe_paths_get_allowed_widget_types($entity) {
-  $allowed = array(
-    'image_image',
-    'file_file',
-  );
+/********************************
+ *    Main process functions    *
+ ********************************/
 
-  drupal_alter($allowed, $entity);
-
-  return $allowed;
-}
 /**
  * Actually pre processes the files. Set a $file->fe_paths_processed flag on
  * the file entity, then add to process queue. The file will be processed
@@ -279,117 +270,9 @@ function fe_paths_file_process_available($file) {
   return $return;
 }
 
-/**
- * Implements hook_token_info().
- */
-function fe_paths_token_info() {
-  $info['tokens']['file']['name-only'] = array(
-    'name' => t("File name"),
-    'description' => t("File name without extension."),
-  );
-  $info['tokens']['file']['name-only-original'] = array(
-    'name' => t("File name - original"),
-    'description' => t("File name without extension - original."),
-  );
-  $info['tokens']['file']['extension-original'] = array(
-    'name' => t("File extension - original"),
-    'description' => t("File extension - original."),
-  );
-
-  return $info;
-}
-
-/**
- * Implements hook_tokens().
- */
-function fe_paths_tokens($type, $tokens, array $data = array(), array $options = array()) {
-  $url_options = array('absolute' => TRUE);
-  if (isset($language)) {
-    $url_options['language'] = $language;
-  }
-  $sanitize = !empty($options['sanitize']);
-
-  $replacements = array();
-
-  if ($type == 'file' && !empty($data['file'])) {
-    $file = $data['file'];
-
-    foreach ($tokens as $name => $original) {
-      switch ($name) {
-        case 'name-only':
-          $info = pathinfo($file->filename);
-          $replacements[$original] = $info['filename'];
-          break;
-
-        case 'name-only-original':
-          $info = pathinfo($file->origname);
-          $replacements[$original] = $info['filename'];
-          break;
-
-        case 'extension-original':
-          $info = pathinfo($file->origname);
-          // Devel themer provides files with no extensions. @todo: test how
-          // will this work.
-          $replacements[$original] = isset($info['extension']) ? $info['extension'] : '';
-          break;
-      }
-    }
-  }
-
-  return $replacements;
-}
-
-function fe_paths_entity_info() {
-  $return = array(
-    'fe_paths_config' => array(
-      'label' => t('File entity paths configuration'),
-      'entity class' => 'Entity',
-      'controller class' => 'EntityAPIControllerExportable',
-      'base table' => 'fe_paths_config',
-      'fieldable' => FALSE,
-      'entity keys' => array(
-        'id' => 'id',
-        'name' => 'machine_name',
-        'label' => 'label',
-      ),
-      'module' => 'fe_paths',
-      'exportable' => TRUE,
-      'label callback' => 'entity_class_label',
-      'uri callback' => 'entity_class_uri',
-    ),
-  );
-
-  if (module_exists('entitycache')) {
-    $return['fe_paths_config']['entity cache'] = TRUE;
-  }
-
-  return $return;
-}
-
-/**
- * Implements hook_form_alter().
- */
-function fe_paths_form_alter(&$form, &$form_state, $form_id) {
-
-}
-
-/**
- * Check, if machine name of settings is exists.
- *
- * @param $machine_name
- *   The machine name to check
- *
- * @return mixed
- *  The number of rows, in which the machine name is being. Normally it could
- *  be 0 or 1.
- */
-function fe_paths_check_machine_name($machine_name) {
-  return db_select('fe_paths_config', 'fe')
-    ->fields('fe', array('machine_name'))
-    ->condition('machine_name', $machine_name)
-    ->execute()
-    ->rowCount();
-}
+/********************************
+ *       Entity functions       *
+ ********************************/
 
 /**
  * Load multiple File Entity Paths config entities based on certain conditions.
@@ -492,21 +375,106 @@ function fe_paths_config_save($config) {
   return entity_save('fe_paths_config', $config);
 }
 
+/**
+ * Prepare configuration entity to save.
+ *
+ * @param $config
+ */
 function fe_paths_prepare_config(&$config) {
   $info = entity_get_info('fe_paths_config');
 
+  // Remove all unnecessary values from the config.
   foreach ($config as $key => $value) {
     if (!in_array($key, $info['schema_fields_sql']['base table'])) {
       unset($config[$key]);
     }
   }
 
+  // Make an object
   $config = (object) $config;
+  // Set status, if necessary.
   if (!isset($config->status)) {
     $config->status = 1;
   }
 }
 
+/********************************
+ *       Helper functions       *
+ ********************************/
+
+/**
+ * @param $entity
+ *
+ * @return array
+ */
+function fe_paths_get_allowed_widget_types($entity) {
+  $allowed = array(
+    'image_image',
+    'file_file',
+  );
+
+  drupal_alter($allowed, $entity);
+
+  return $allowed;
+}
+
+/**
+ * Get all variables defined by File Entity Paths
+ *
+ * @param $file_type
+ *   The bundle name of file, eg. image, application
+ *
+ * @return $settings
+ *   An array of variables.If $file_type set, only returns the settings of
+ *   $file_type
+ */
+function fe_paths_get_settings($file_type = NULL) {
+  $settings = &drupal_static(__FUNCTION__);
+
+  if (!isset($settings[$file_type])) {
+    $entity_info = entity_get_info('file');
+    foreach ($entity_info['bundles'] as $type => $bundle_info) {
+      $defaults = array();
+      if (isset($bundle_info['admin'])) {
+        foreach (file_get_stream_wrappers() as $scheme => $wrapper) {
+          $defaults[$scheme] = array(
+            'path' => '',
+            'filename' => '[file:name-only-original].[file:extension-original]',
+          );
+        }
+        $settings[$type] = variable_get("fep_$type", $defaults);
+      }
+    }
+  }
+
+  return is_null($file_type) ? $settings : $settings[$file_type];
+}
+
+/**
+ * Check, if machine name of settings is exists.
+ *
+ * @param $machine_name
+ *   The machine name to check
+ *
+ * @return mixed
+ *  The number of rows, in which the machine name is being. Normally it could
+ *  be 0 or 1.
+ */
+function fe_paths_check_machine_name($machine_name) {
+  return db_select('fe_paths_config', 'fe')
+    ->fields('fe', array('machine_name'))
+    ->condition('machine_name', $machine_name)
+    ->execute()
+    ->rowCount();
+}
+
+/**
+ * Get all fieldable entities. Use to build options for form elements, or
+ * check, wether the saved entity is processable by File Entity Paths.
+ *
+ * @return array
+ *   An array of fieldable entities, keyed by machine name, value is the label.
+ */
 function fe_paths_get_fieldable_entities() {
   $return = array();
   foreach (entity_get_info() as $name => $entity) {

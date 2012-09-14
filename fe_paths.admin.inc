@@ -4,6 +4,14 @@
  * Admin ui for the File Entity Paths module.
  */
 
+/**
+ * Form builder for default configuration admin form.
+ *
+ * @param $form
+ * @param $form_state
+ *
+ * @return mixed
+ */
 function fe_paths_admin_form($form, &$form_state) {
   $allowed = array(
     'public',
@@ -64,6 +72,15 @@ function fe_paths_admin_form($form, &$form_state) {
   return system_settings_form($form);
 }
 
+/**
+ * Form builder for File Entity Paths configuration add/edit form.
+ *
+ * @param $form
+ * @param $form_state
+ * @param null $config
+ *
+ * @return mixed
+ */
 function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
   $file_entity_info = entity_get_info('file');
   $entities = fe_paths_get_fieldable_entities();
@@ -148,7 +165,6 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     }
   }
 
-
   $form['file_entity'] = array(
     '#type' => 'fieldset',
     '#title' => t('File types'),
@@ -160,7 +176,6 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
       '#default_value' => $file_types_defaults,
     ),
   );
-
 
   $form['parent_entity'] = array(
     '#type' => 'fieldset',
@@ -218,25 +233,37 @@ function fe_paths_add_bundle_settings($form, $form_state) {
   }
 }
 
+/**
+ * Form validation of File Entity Paths configuration add/edit form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function fe_paths_entity_edit_form_validate($form, &$form_state) {
   $form_state['redirect'] = 'admin/config/media/fe-paths';
 }
 
+/**
+ * Form submit function for File Entity Paths configuration add/edit form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function fe_paths_entity_edit_form_submit($form, &$form_state) {
   $config = $form_state['values'];
   fe_paths_prepare_config($config);
   fe_paths_config_save($config);
 }
 
-function fe_paths_global_page() {
-  $configs = fe_paths_config_load_multiple();
-  $build = array();
-
-  $build['config_form'] = drupal_get_form('fe_paths_config_table_form', $configs);
-  $build['global_form'] = drupal_get_form('fe_paths_admin_form');
-  return $build;
-}
-
+/**
+ * Form builder for File Entity Paths configuration list table.
+ *
+ * @param $form
+ * @param $form_state
+ * @param $configs
+ *
+ * @return array
+ */
 function fe_paths_config_table_form($form, &$form_state, $configs) {
   $form_state['configs'] = $configs;
   $form = array(
@@ -285,6 +312,12 @@ function fe_paths_config_table_form($form, &$form_state, $configs) {
   return $form;
 }
 
+/**
+ * Form submit function for File Entity Paths table form.
+ *
+ * @param $form
+ * @param $form_state
+ */
 function fe_paths_config_table_form_submit($form, &$form_state) {
   foreach ($form_state['configs'] as $id => $config) {
     $config->weight = $form_state['values']['config'][$id]['weight'];
@@ -292,6 +325,75 @@ function fe_paths_config_table_form_submit($form, &$form_state) {
   }
 }
 
+/**
+ * Form build for configuration deleting form.
+ *
+ * @param $form
+ * @param $form_state
+ * @param $config
+ *
+ * @return mixed
+ */
+function fe_paths_config_delete_confirm($form, &$form_state, $config) {
+  $form['id'] = array('#type' => 'value', '#value' => $config->id);
+
+  return confirm_form($form,
+    t('Delete File Entity Path configuration.'),
+    'admin/config/media/fe-paths',
+    t('Are you sure you want to delete %title configuration?', array('%title' => $config->label)),
+    t('Delete'),
+    t('Cancel')
+  );
+}
+
+/**
+ * Form submit function for configuration deleting form.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function fe_paths_config_delete_confirm_submit($form, &$form_state) {
+  if ($form_state['values']['confirm']) {
+    fe_paths_config_delete($form_state['values']['id']);
+    drupal_set_message(t('The configuration is deleted.'));
+  }
+  $form_state['redirect'] = 'admin/config/media/fe-paths';
+}
+
+/**
+ * Page callback for admin/config/media/fe-paths page.
+ *
+ * @return array
+ */
+function fe_paths_global_page() {
+  $configs = fe_paths_config_load_multiple();
+  $build = array();
+
+  $build['config_form'] = drupal_get_form('fe_paths_config_table_form', $configs);
+  $build['global_form'] = drupal_get_form('fe_paths_admin_form');
+  return $build;
+}
+
+/**
+ * Page callback for configuration edit page.
+ *
+ * @param $config
+ *
+ * @return array|mixed
+ */
+function fe_paths_config_edit_page($config) {
+  $build = drupal_get_form('fe_paths_entity_edit_form', $config);
+
+  return $build;
+}
+
+/**
+ * Theme function to build table from list of File Entity Paths config.
+ *
+ * @param $variables
+ *
+ * @return string
+ */
 function theme_fe_paths_config_table($variables) {
   $element = $variables['element'];
   drupal_add_tabledrag('form_id', 'order', 'sibling', 'order-weight');
@@ -318,43 +420,9 @@ function theme_fe_paths_config_table($variables) {
     $rows[] = $row;
   }
 
-
   return theme('table', array(
     'header' => $header,
     'rows' => $rows,
     'attributes' => array('id' => 'form_id'), // needed for table dragging
   ));
-}
-
-/**
- * Page callback for configuration edit page.
- *
- * @param $config
- *
- * @return array|mixed
- */
-function fe_paths_config_edit_page($config) {
-  $build = drupal_get_form('fe_paths_entity_edit_form', $config);
-
-  return $build;
-}
-
-function fe_paths_config_delete_confirm($form, &$form_state, $config) {
-  $form['id'] = array('#type' => 'value', '#value' => $config->id);
-
-  return confirm_form($form,
-    t('Delete File Entity Path configuration.'),
-    'admin/config/media/fe-paths',
-    t('Are you sure you want to delete %title configuration?', array('%title' => $config->label)),
-    t('Delete'),
-    t('Cancel')
-  );
-}
-
-function fe_paths_config_delete_confirm_submit($form, &$form_state) {
-  if ($form_state['values']['confirm']) {
-    fe_paths_config_delete($form_state['values']['id']);
-    drupal_set_message(t('The configuration is deleted.'));
-  }
-  $form_state['redirect'] = 'admin/config/media/fe-paths';
 }
