@@ -397,6 +397,62 @@ function fe_paths_prepare_config(&$config) {
 }
 
 /********************************
+ * File Entity Path usage CRUD  *
+ ********************************/
+
+function fe_paths_usage_add($fid, $entity_type, $entity_id, $id) {
+  if (!fe_paths_usage($fid)) {
+    $data = array(
+      'fid' => $fid,
+      'entity_type' => $entity_type,
+      'entity_id' => $entity_id,
+      'id' => $id,
+    );
+    return drupal_write_record('fe_paths_usage', $date);
+  }
+  else {
+    return db_update('fe_paths_usage')
+      ->fields(
+        array(
+          'entity_type' => $entity_type,
+          'entity_id' => $entity_id,
+          'id' => $id,
+        )
+      )
+      ->condition('fid', $fid)
+      ->execute();
+  }
+}
+
+function fe_paths_usage_delete($fid) {
+  return db_delete('fe_paths_usage')
+    ->condition('fid', $fid)
+    ->execute();
+}
+
+function fe_paths_usage($fid, $reset = FALSE) {
+  $usage = drupal_static(__FUNCTION__);
+
+  if (isset($usage[$fid]) && !$reset) {
+    return $usage[$fid];
+  }
+
+  $result = db_select('fe_paths_usage', 'fep')
+    ->fields('fep')
+    ->condition('fid', $fid)
+    ->execute()
+    ->fetchCol();
+
+  if (!$result) {
+    return FALSE;
+  }
+  else {
+    $usage[$fid] = $result;
+  }
+  return $result[$fid];
+}
+
+/********************************
  *       Helper functions       *
  ********************************/
 
