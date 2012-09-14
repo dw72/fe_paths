@@ -220,11 +220,37 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     }
   }
 
+  $form['overrides'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Overrides'),
+    'other_config' => array(
+      '#type' => 'checkbox',
+      '#title' => t('Override by other configuration.'),
+      '#description' => t('Let other lower weight configuration to modify path provided by this configuration. This is independent from the bottom <em>Override options</em> settings. If this is checked, the lower weighted configration will be always applied!'),
+      '#default_value' => isset($config->data['other_config']) ? $config->data['other_config'] : FALSE,
+      '#parents' => array('data', 'other_config'),
+    ),
+    'override_options' => array(
+      '#type' => 'radios',
+      '#title' => t('Override options'),
+      '#description' => t('This override setting define the behaviour of files, which are used more than one entities in the same time.
+        Set this to <em>Never</em> means, the path of the file will never be regenerated.
+        <em>Within the same entity type</em> means, if a file was uploaded to a user entity, and is used again in a node, the file path will not be overridden.
+        But if you upload the file to a node, and you use it again in other node, the new node tokens (if set) will be saved.
+        If settings <em>Within the same entity</em> is choosen, the file used in two different node will be not updated,
+        but if you set to change filename to node title, and the title is changed in the node, in which the file was originally uploaded,
+        the path will be changed to the new node title.' ),
+      '#options' => fe_paths_get_override_options(),
+      '#default_value' => isset($config->data['override_options']) ? $config->data['override_options'] : FE_PATHS_OVERRIDE_NEVER,
+      '#parents' => array('data', 'override_options'),
+    ),
+  );
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save configuration'),
   );
 
+  dsm(get_defined_vars());
   return $form;
 }
 

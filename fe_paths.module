@@ -5,6 +5,17 @@
  */
 
 /**
+ * Override existing processed files, if a new config matches, or something is
+ * changed in the existing source data. (eg node->title changed)
+ */
+define('FE_PATHS_OVERRIDE_NEVER', 0); // The file will be never overridden.
+define('FE_PATHS_OVERRIDE_WITHIN_ENTITY_TYPE', 1); // The file will be overridden, if new data based on the same entity type.
+define('FE_PATHS_OVERRIDE_WITHIN_ENTITY', 2); // The file will be overridden, if new data based on the same entity.
+define('FE_PATHS_OVERRIDE_ALWAYS', 3); // // The file will be overridden under every circumstanses.
+
+
+
+/**
  * Implements hook_permission().
  */
 function fe_paths_permission() {
@@ -533,7 +544,7 @@ function theme_fe_paths_config_data($vars) {
         $enabled_types[] = $val;
       }
     }
-    $items[] = t('File types processed: @types', array('@types' => implode(',', $enabled_types)));
+    $items[] = t('File types processed: @types', array('@types' => implode(', ', $enabled_types)));
   }
 
   if (isset($data['entity'])) {
@@ -668,4 +679,13 @@ function fe_paths_get_bundle_names($entity_type) {
     $bundles[$key] = $bundle['label'];
   }
   return $bundles;
+}
+
+function fe_paths_get_override_options() {
+  return array(
+    FE_PATHS_OVERRIDE_NEVER => t('Never'),
+    FE_PATHS_OVERRIDE_WITHIN_ENTITY_TYPE => t('Within the same entity type'),
+    FE_PATHS_OVERRIDE_WITHIN_ENTITY => t('Within the same entity'),
+    FE_PATHS_OVERRIDE_ALWAYS => t('Always')
+  );
 }
