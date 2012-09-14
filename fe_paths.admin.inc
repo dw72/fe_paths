@@ -250,7 +250,6 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     '#value' => t('Save configuration'),
   );
 
-  dsm(get_defined_vars());
   return $form;
 }
 
