@@ -201,7 +201,7 @@ function fe_paths_file_process($file, $entity, $type) {
     else {
       $bundle = $type;
     }
-    dsm(get_defined_vars());
+
     // If we have valid usage, we have some chance to quit immediatly.
     if ($fe_paths_usage) {
       $file_config = $configs[$fe_paths_usage->id];
