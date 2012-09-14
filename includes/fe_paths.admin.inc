@@ -66,10 +66,9 @@ function fe_paths_admin_form($form, &$form_state) {
 
 function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
   $file_entity_info = entity_get_info('file');
-  $entities = entity_get_info();
+  $entities = fe_paths_get_fieldable_entities();
   $file_types = array();
   $file_types_defaults = array();
-  $entities_array = array();
   $token_info = token_get_info();
 
   if (!isset($form_state['fe_path_config'])) {
@@ -78,13 +77,6 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
 
   foreach ($file_entity_info['bundles'] as $name => $bundle) {
     $file_types[$name] = $bundle['label'];
-  }
-
-  foreach ($entities as $name => $entity) {
-    // Only works with fieldable entities.
-    if ($entity['fieldable']) {
-      $entities_array[$name] = $entity['label'];
-    }
   }
 
   if (!is_null($config)) {
@@ -140,7 +132,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
       '#title' => t('Replacement patterns'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
-      '#description' => theme('token_tree', array('token_types' => array_keys($entities_array))),
+      '#description' => theme('token_tree', array('token_types' => array_keys($entities))),
       '#weight' => 1000,
       '#prefix' => '<div id="fe-paths-tokens">',
       '#suffix' => '</div>',
@@ -178,13 +170,14 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
       '#type' => 'select',
       '#title' => t('Choose entity'),
       '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
-      '#options' => array('global' =>t('Global')) + $entities_array,
+      '#options' => array('global' =>t('Global')) + $entities,
       '#suffix' => '<div id="bundle-target"></div>',
       '#ajax' => array(
         'callback' => 'fe_paths_add_bundle_settings',
         'wrapper' => 'bundle-target',
       ),
       '#parents' => array('data', 'entity'),
+      '#default_value' => isset($config->data['entity']) ? $config->data['entity'] : 'global',
     ),
   );
 
