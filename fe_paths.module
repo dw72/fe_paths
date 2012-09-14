@@ -245,7 +245,7 @@ function fe_paths_file_process($file, $entity, $type) {
 
       // If override by other configuration is not allowed, and doesn'r reach
       // own config, skip to the next config.
-      if (!$file_config->data['other_config'] && !$own_config) {
+      if ($file_config && !$file_config->data['other_config'] && !$own_config) {
         continue;
       }
 
