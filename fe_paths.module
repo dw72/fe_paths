@@ -134,6 +134,8 @@ function fe_paths_entity_presave($entity, $type) {
       $entity->origname = $entity->filename;
     }
   }
+  // Only passed to process, if entity was not processed before, and
+  // and the entity is fieldable.
   elseif (!isset($entity->fe_paths_processed) && array_key_exists($type, fe_paths_get_fieldable_entities())) {
     $entity_info = entity_get_info($type);
     // Get all fields of the saved entity.
@@ -156,6 +158,19 @@ function fe_paths_entity_presave($entity, $type) {
           // Just for testing, in _registershutdown hard to debug.
           //fe_paths_file_process(file_load($file['fid']), $entity, $type);
           drupal_register_shutdown_function('fe_paths_file_process', file_load($file['fid']), $entity, $type);
+        }
+      }
+      // Searching in textfields for possibly embed files by media wysiwsg.
+      if (!empty($field['settings']['text_processing']) && $field_items = field_get_items($type, $entity, $field['field_name'])) {
+        foreach ($field_items as $field_item) {
+          preg_match_all('/\[\[.*?\]\]/s', $field_item['value'], $matches);
+          foreach ($matches[0] as $tag) {
+            $tag = str_replace(array('[[', ']]'), '', $tag);
+            $tag_info = drupal_json_decode($tag);
+            if (isset($tag_info['fid'])) {
+              drupal_register_shutdown_function('fe_paths_file_process', file_load($tag_info['fid']), $entity, $type);
+            }
+          }
         }
       }
     }
@@ -800,3 +815,4 @@ function fe_paths_have_valid_bundle($entity_type) {
   $bundles = fe_paths_get_bundle_names($entity_type);
   return !(count($bundles) == 1 && array_key_exists($entity_type, $bundles));
 }
+
