@@ -357,16 +357,27 @@ function fe_paths_move_file($file, $replace_path, $replace_filename, $token_type
 
   // Modify text by transliteration.
   if (isset($config_data['transliteration']) && $config_data['transliteration']) {
-    $path = transliteration_clean_filename($path);
+    // The path need some vudu to clean, because transliteration remove the
+    // slashes.
+    $parts = array();
+    foreach (explode('/', $path) as $part) {
+      $parts[] = transliteration_clean_filename($part);
+    }
+    $path = implode('/', $parts);
     $filename = transliteration_clean_filename($filename);
   }
 
   // Modify text by pathauto.
   if (isset($config_data['pathauto']) && $config_data['pathauto']) {
     module_load_include('inc', 'pathauto');
-    $path = pathauto_cleanstring($path);
-    // The filename need some vudu to clean, because pathauto usually remove
-    // the punctuation.
+
+    $parts = array();
+    foreach (explode('/', $path) as $part) {
+      $parts[] = pathauto_cleanstring($part);
+    }
+    $path = implode('/', $parts);
+    // The same vudu, as in the transliteration, but here is because of
+    // punctuation.
     $parts = array();
     foreach (explode('.', $filename) as $part) {
       $parts[] = pathauto_cleanstring($part);
