@@ -288,6 +288,26 @@ function fe_paths_file_process($file, $entity, $type) {
   }
 }
 
+/**
+ * Build new filename and path based on settings, and move file, if necessary.
+ *
+ * @param $file
+ *   The original file object.
+ * @param $replace_path
+ *   Path pattern will be used as replacement pattern.
+ * @param $replace_filename
+ *   Filename pattern will be used as replacement pattern.
+ * @param $token_type
+ *   Originally the parent entity type, determine, which tokens is used in
+ *   transformation.
+ * @param $config_data
+ *   The additional data of actaul File Entity Paths configuration.
+ * @param null $entity
+ *   The parent entity.
+ *
+ * @return mixed
+ *   The file, if transformation and file moving was success, otherwise FALSE.
+ */
 function fe_paths_move_file($file, $replace_path, $replace_filename, $token_type, $config_data, $entity = NULL) {
   $scheme = file_uri_scheme($file->uri);
   $old_dir_uri = str_replace('/' . $file->filename, '', $file->uri);
@@ -306,15 +326,18 @@ function fe_paths_move_file($file, $replace_path, $replace_filename, $token_type
     'file'
   ), array('clear' => TRUE));
 
-
+  // Modify text by transliteration.
   if (isset($config_data['transliteration']) && $config_data['transliteration']) {
     $path = transliteration_clean_filename($path);
     $filename = transliteration_clean_filename($filename);
   }
 
+  // Modify text by pathauto.
   if (isset($config_data['pathauto']) && $config_data['pathauto']) {
     module_load_include('inc', 'pathauto');
     $path = pathauto_cleanstring($path);
+    // The filename need some vudu to clean, because pathauto usually remove
+    // the punctuation.
     $parts = array();
     foreach (explode('.', $filename) as $part) {
       $parts[] = pathauto_cleanstring($part);
@@ -325,6 +348,9 @@ function fe_paths_move_file($file, $replace_path, $replace_filename, $token_type
   $new_uri = $scheme . '://' . $path . '/' . $filename;
   $directory = $scheme . '://' . $path;
 
+  // Only do file_move, if the new uri is different than old. But need
+  // to return with the file, because without this, no config match happen
+  // in fe_paths_file_process.
   if ($new_uri == $file->uri) {
     return $file;
   }
@@ -332,7 +358,7 @@ function fe_paths_move_file($file, $replace_path, $replace_filename, $token_type
   // Create directory, if necessary.
   file_prepare_directory($directory, FILE_CREATE_DIRECTORY);
   if (file_move($file, $new_uri)) {
-    // Check, if directory is empty, and delete it, if yes
+    // Check, if directory is empty, and delete it, if yes, remove it.
     $files = file_scan_directory($old_dir_uri, '/.*/');
     if (file_exists($old_dir_uri) && empty($files)) {
       drupal_rmdir($old_dir_uri);
