@@ -154,8 +154,8 @@ function fe_paths_entity_presave($entity, $type) {
       if (in_array($field['widget']['type'], $allowed_types) && $files = field_get_items($type, $entity, $field['field_name'])) {
         foreach ($files as $file) {
           // Just for testing, in _registershutdown hard to debug.
-          fe_paths_file_process(file_load($file['fid']), $entity, $type);
-          //drupal_register_shutdown_function('fe_paths_file_process', $entity);
+          //fe_paths_file_process(file_load($file['fid']), $entity, $type);
+          drupal_register_shutdown_function('fe_paths_file_process', file_load($file['fid']), $entity, $type);
         }
       }
     }
@@ -191,7 +191,8 @@ function fe_paths_file_process($file, $entity, $type) {
     $move = FALSE; // Variable to set, whether real filemove is necessary.
     $fe_paths_usage = fe_paths_usage($file->fid);
     $file_config = FALSE;
-    $entity_id = $entity->$entity_info['entity keys']['id'];
+    $entity_key = $entity_info['entity keys']['id'];
+    $entity_id = $entity->$entity_key;
     $bundle_key = FALSE;
 
     if (isset($entity_info['bundle keys']['bundle'])) {
@@ -238,47 +239,60 @@ function fe_paths_file_process($file, $entity, $type) {
       if ($match) {
         break;
       }
-      // If own_config is TRUE, means, the $config is the same, like
-      // previously processed.
-      $own_config = $config == $file_config;
+      // If $this_file_config is TRUE, means, the $config is the same, like
+      // previously processed on this file.
+      $this_file_config = $config == $file_config;
       $data = $config->data;
 
       // If override by other configuration is not allowed, and doesn'r reach
       // own config, skip to the next config.
-      if ($file_config && !$file_config->data['other_config'] && !$own_config) {
+      if ($file_config && !$file_config->data['other_config'] && !$this_file_config) {
         continue;
       }
 
       // We reach the existing used config, no more config need to visit.
-      if ($own_config) {
+      // Step to the next config means, the file would be processed by a HEIGHER
+      // weight configuration, than previously was processed.
+      if ($this_file_config) {
         $match = TRUE;
+
+        // Let's see, how can we escape here. We can check the conditions used
+        // sooner, but can't escape because the config can be overridden by
+        // lighter config.
+        if ($file_config->data['override_options'] == FE_PATHS_OVERRIDE_NEVER) {
+          return;
+        }
+        if ($file_config->data['override_options'] == FE_PATHS_OVERRIDE_WITHIN_ENTITY_TYPE && $fe_paths_usage->entity_type != $type) {
+          return;
+        }
+        if ($file_config->data['override_options'] == FE_PATHS_OVERRIDE_WITHIN_ENTITY && $fe_paths_usage->entity_id != $entity_id) {
+          return;
+        }
       }
-      // These conditions are irrelevant, if we are in $own_config
-      else {
-        // First, step out, if the file types of config doesn't match.
-        if (isset($data['file_entity'][$file->type]) && $data['file_entity'][$file->type] !== $file->type) {
+
+      // First, step to the next, if the file types of config doesn't match.
+      if (isset($data['file_entity'][$file->type]) && $data['file_entity'][$file->type] !== $file->type) {
+        continue;
+      }
+      // If the processed entity has different type then this config, or the
+      // config settings is not global skip.
+      if (isset($data['entity']) && $data['entity'] != $type && $data['entity'] != 'global') {
+        continue;
+      }
+      // Investigation of bundle settings. It's neccessary if data contains
+      // bundle settings and the entity has bundle definition.
+      if (isset($data['bundle'])) {
+        // Doesn't match, if the bundle value is not global, or the entity
+        // has different bundle, then the settings.
+        if ($data['bundle'] != 'global' && $data['bundle'] != $bundle) {
           continue;
-        }
-        // If the processed entity has different type then this config, or the
-        // config settings is not global skip.
-        if (isset($data['entity']) && $data['entity'] != $type && $data['entity'] != 'global') {
-          continue;
-        }
-        // Investigation of bundle settings. It's neccessary if data contains
-        // bundle settings and the entity has bundle definition.
-        if (isset($data['bundle'])) {
-          // Doesn't match, if the bundle value is not global, or the entity
-          // has different bundle, then the settings.
-          if ($data['bundle'] != 'global' && $data['bundle'] != $bundle) {
-            continue;
-          }
         }
       }
 
       if (fe_paths_move_file($file, $config->path, $config->filename, $type, $data, $entity)) {
         $match = TRUE;
         // Store, which configuration with which entity moves the file.
-        fe_paths_usage_add($file->fid, $type, $entity->{$entity_info['entity keys']['id']}, $config->id);
+        fe_paths_usage_add($file->fid, $type, $entity->$entity_key, $config->id);
       }
       // If something is wrong with the file_move, continue until fallback.
       else {
