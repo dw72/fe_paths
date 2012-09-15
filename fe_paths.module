@@ -275,7 +275,7 @@ function fe_paths_file_process($file, $entity, $type) {
         }
       }
 
-      if (fe_paths_move_file($file, $config->path, $config->filename, $type, $entity)) {
+      if (fe_paths_move_file($file, $config->path, $config->filename, $type, $data, $entity)) {
         $match = TRUE;
         // Store, which configuration with which entity moves the file.
         fe_paths_usage_add($file->fid, $type, $entity->{$entity_info['entity keys']['id']}, $config->id);
@@ -288,7 +288,7 @@ function fe_paths_file_process($file, $entity, $type) {
   }
 }
 
-function fe_paths_move_file($file, $replace_path, $replace_filename, $token_type, $entity = NULL) {
+function fe_paths_move_file($file, $replace_path, $replace_filename, $token_type, $config_data, $entity = NULL) {
   $scheme = file_uri_scheme($file->uri);
   $old_dir_uri = str_replace('/' . $file->filename, '', $file->uri);
 
@@ -307,8 +307,27 @@ function fe_paths_move_file($file, $replace_path, $replace_filename, $token_type
   ), array('clear' => TRUE));
 
 
+  if (isset($config_data['transliteration']) && $config_data['transliteration']) {
+    $path = transliteration_clean_filename($path);
+    $filename = transliteration_clean_filename($filename);
+  }
+
+  if (isset($config_data['pathauto']) && $config_data['pathauto']) {
+    module_load_include('inc', 'pathauto');
+    $path = pathauto_cleanstring($path);
+    $parts = array();
+    foreach (explode('.', $filename) as $part) {
+      $parts[] = pathauto_cleanstring($part);
+    }
+    $filename = implode('.', $parts);
+  }
+
   $new_uri = $scheme . '://' . $path . '/' . $filename;
   $directory = $scheme . '://' . $path;
+
+  if ($new_uri == $file->uri) {
+    return $file;
+  }
 
   // Create directory, if necessary.
   file_prepare_directory($directory, FILE_CREATE_DIRECTORY);

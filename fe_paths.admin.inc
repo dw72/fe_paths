@@ -156,6 +156,30 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     ),
   );
 
+
+  $form['path_name']['transliteration'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Transliterate'),
+    '#default_value' => isset($config->data['transliteration']) ? $config->data['transliteration'] : FALSE,
+    '#description' => t('Use module !link to cleanup path and filename.', array('!link' => l(t('Transliteration'), 'http://drupal.org/project/transliteration', array('external' => TRUE)))),
+    '#parents' => array('data', 'transliteration'),
+  );
+  if (!module_exists('transliteration')) {
+    $form['transliteration']['#disabled'] = TRUE;
+    $form['transliteration']['#default_value'] = 0;
+  }
+
+  $form['path_name']['pathauto'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Pathauto'),
+    '#default_value' => isset($config->data['pathauto']) ? $config->data['pathauto'] : FALSE,
+    '#description' => t('Use module !link to cleanup path and filename.', array('!link' => l(t('Pathauto'), 'http://drupal.org/project/pathauto', array('external' => TRUE)))),
+    '#parents' => array('data', 'pathauto'),
+  );
+  if (!module_exists('pathauto')) {
+    $form['pathauto']['#disabled'] = TRUE;
+    $form['pathauto']['#default_value'] = 0;
+  }
   // Fill out the default values of the file_bundle checkboxes.
   if (!is_null($config)) {
     foreach ($config->data['file_entity'] as $key => $val) {
