@@ -241,7 +241,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
             '#type' => 'checkbox',
             '#title' => t($field),
             '#default_value' => FALSE,
-            '#parents' => array('data', 'bundle', 'fields'),
+            '#parents' => array('data', $key, $field_name),
           );
         }
       }
@@ -297,7 +297,7 @@ function fe_paths_add_bundle_settings($form, $form_state) {
             '#type' => 'checkbox',
             '#title' => t($field),
             '#default_value' => FALSE,
-            '#parents' => array('data', 'bundle', 'fields'),
+            '#parents' => array('data', $key, $field_name),
           );
         }
       }
