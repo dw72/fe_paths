@@ -86,7 +86,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
   $entities = fe_paths_get_fieldable_entities();
   $file_types = array();
   $file_types_defaults = array();
-  $token_info = token_get_info();
+  $fields = fe_paths_get_available_fields();
 
   if (!isset($form_state['fe_path_config'])) {
     $form_state['fe_path_config'] = $config;
@@ -210,37 +210,41 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
       '#title' => t('Choose entity'),
       '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
       '#options' => array('global' =>t('Global')) + $entities,
-      '#suffix' => isset($config->data['bundle']) ? '' : '<div id="bundle-target"></div>',
       '#ajax' => array(
         'callback' => 'fe_paths_add_bundle_settings',
         'wrapper' => 'bundle-target',
+        'method' => 'html',
       ),
       '#parents' => array('data', 'entity'),
       '#default_value' => isset($config->data['entity']) ? $config->data['entity'] : 'global',
     ),
+    'bundle' => array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'id' => 'bundle-target',
+      )
+    )
   );
 
   if (isset($config->data['entity'])) {
     $bundles = fe_paths_get_bundle_names($config->data['entity']);
     if (fe_paths_have_valid_bundle($config->data['entity'])) {
-      $form['parent_entity']['bundle'] = array(
-        '#type' => 'select',
-        '#title' => t('Bundle'),
-        '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
-        '#options' => array('global' => t('Global')) + $bundles,
-        '#prefix' => '<div id="bundle-target">',
-        '#suffix' => '</div><div id="fields-target"></div>',
-        '#ajax' => array( //'callback' => 'fe_paths_add_field_settings',
-          //'wrapper' => 'field-target',
-        ),
-        '#parents' => array('data', 'bundle'),
-        '#default_value' => isset($config->data['bundle']) ? $config->data['bundle'] : 'global',
-      );
-    }
-    else {
-      $form['parent_entity']['bundle'] = array(
-        '#markup' => '<div id="bundle-target"></div>',
-      );
+      foreach ($bundles as $key => $bundle) {
+        $fields = fe_paths_get_available_fields($config->data['entity'], $key);
+
+        $form['parent_entity']['bundle'][$key] = array(
+          '#type' => 'fieldset',
+          '#title' => t($bundles[$key]),
+        );
+        foreach ($fields as $field_name => $field) {
+          $form['parent_entity']['bundle'][$key][$field_name] = array(
+            '#type' => 'checkbox',
+            '#title' => t($field),
+            '#default_value' => FALSE,
+            '#parents' => array('data', 'bundle', 'fields'),
+          );
+        }
+      }
     }
   }
 
@@ -278,29 +282,33 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
 }
 
 function fe_paths_add_bundle_settings($form, $form_state) {
-  if (isset($form_state['values']['data']['entity']) && $form_state['values']['parent_entity']['entity'] != 'global') {
+  $return = array();
+  if (isset($form_state['values']['data']['entity']) && $form_state['values']['data']['entity'] != 'global') {
     $bundles = fe_paths_get_bundle_names($form_state['values']['data']['entity']);
-    if (fe_paths_have_valid_bundle($form_state['values']['data']['entity'])) {
-      $form['bundle'] = array(
-        '#type' => 'select',
-        '#title' => t('Bundle'),
-        '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
-        '#options' => array('global' => t('Global')) + $bundles,
-        '#prefix' => '<div id="bundle-target">',
-        '#suffix' => '</div><div id="fields-target"></div>',
-        '#ajax' => array(//'callback' => 'fe_paths_add_bundle_settings',
-          //'wrapper' => 'bundle-target',
-        ),
-        '#parents' => array('data', 'bundle'),
+    foreach ($bundles as $key => $bundle) {
+      $fields = fe_paths_get_available_fields($form_state['values']['data']['entity'], $key);
+      $return[$key] = array(
+        '#type' => 'fieldset',
+        '#title' => t($bundles[$key]),
       );
-      return $form['bundle'];
+      if (!empty($fields)) {
+        foreach ($fields as $field_name => $field) {
+          $return[$key][$field_name] = array(
+            '#type' => 'checkbox',
+            '#title' => t($field),
+            '#default_value' => FALSE,
+            '#parents' => array('data', 'bundle', 'fields'),
+          );
+        }
+      }
+      else {
+        $return[$key]['#description'] = t('There isn\'t available field.');
+      }
     }
-    else {
-      return '<div id="bundle-target"></div>';
-    }
+    return $return;
   }
   else {
-    return '<div id="bundle-target"></div>';
+    return '';
   }
 }
 

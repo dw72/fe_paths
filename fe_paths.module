@@ -699,7 +699,7 @@ function theme_fe_paths_config_data($vars) {
  *
  * @return array
  */
-function fe_paths_get_allowed_widget_types($entity) {
+function fe_paths_get_allowed_widget_types($entity = NULL) {
   $allowed = array(
     'image_image',
     'file_file',
@@ -827,3 +827,34 @@ function fe_paths_have_valid_bundle($entity_type) {
   return !(count($bundles) == 1 && array_key_exists($entity_type, $bundles));
 }
 
+/**
+ * Helper function to get, which fields can be choosen in a configuration.
+ *
+ * @param $entity_type
+ * @param $bundle
+ *
+ * @return array
+ *   The available fields for an entity bundle, keyed by the field's machine
+ *   name.
+ */
+function fe_paths_get_available_fields($entity_type = NULL, $bundle = NULL) {
+  $instances = field_info_instances();
+  $allowed_types = fe_paths_get_allowed_widget_types();
+  $return = array();
+
+  foreach ($instances as $entity_name => $type_bundles) {
+    if (is_null($entity_type) || $entity_name == $entity_type) {
+      foreach ($type_bundles as $bundle_name => $bundle_instances) {
+        if (is_null($bundle) || $bundle_name == $bundle) {
+          foreach ($bundle_instances as $field_name => $instance) {
+            if (in_array($instance['widget']['type'], $allowed_types) || !empty($instance['settings']['text_processing'])) {
+              $return[$field_name] = $instance['label'] . ' (' . $field_name . ')';
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return $return;
+}
