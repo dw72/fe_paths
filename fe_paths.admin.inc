@@ -86,12 +86,11 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
   $entities = fe_paths_get_fieldable_entities();
   $file_types = array();
   $file_types_defaults = array();
-  //$fields = fe_paths_get_available_fields();
   // The name of the entity, which is connected to this config. Can be changed by $form_state.
-  $entity = isset($config->data['entity']) ? $config->data['entity'] : NULL;
-  // Set $entity value own $form_state value, if exists. It means, the form
+  $entity_name = isset($config->data['entity']) ? $config->data['entity'] : NULL;
+  // Set $entity_name value own $form_state value, if exists. It means, the form
   // is changed during ajax process.
-  $entity = isset($form_state['values']['data']['entity']) && $form_state['values']['data']['entity'] != 'global' ? $form_state['values']['data']['entity'] : $entity;
+  $entity_name = isset($form_state['values']['data']['entity']) && $form_state['values']['data']['entity'] != 'global' ? $form_state['values']['data']['entity'] : $entity_name;
 
   foreach ($file_entity_info['bundles'] as $name => $bundle) {
     $file_types[$name] = $bundle['label'];
@@ -218,21 +217,27 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     )
   );
 
-  if (!is_null($entity)) {
-    $bundles = fe_paths_get_bundle_names($entity);
+  if (!is_null($entity_name)) {
+    $bundles = fe_paths_get_bundle_names($entity_name);
     foreach ($bundles as $key => $bundle) {
-      $fields = fe_paths_get_available_fields($config->data['entity'], $key);
-
       $form['parent_entity']['bundle'][$key] = array(
         '#type' => 'fieldset',
         '#title' => $bundles[$key],
-        '#tree' => TRUE,
       );
-      foreach ($fields as $field_name => $field) {
-        $form['parent_entity']['bundle'][$key][$field_name] = array(
-          '#type' => 'checkbox',
-          '#title' => $field,
-          '#default_value' => FALSE,
+
+      $fields = fe_paths_get_available_fields($entity_name, $key);
+      if (!empty($fields)) {
+        foreach ($fields as $field_name => $field) {
+          $form['parent_entity']['bundle'][$key][$field_name] = array(
+            '#type' => 'checkbox',
+            '#title' => $field,
+            '#default_value' => $config->data['bundle'][$key][$field_name],
+          );
+        }
+      }
+      else {
+        $form['parent_entity']['bundle'][$key]['fallback'] = array(
+          '#markup' => t('No available field for this entity.'),
         );
       }
     }
@@ -268,7 +273,6 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     '#value' => t('Save configuration'),
   );
 
-  //dsm(get_defined_vars());
   return $form;
 }
 
