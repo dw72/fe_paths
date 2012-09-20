@@ -231,7 +231,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
           $form['parent_entity']['bundle'][$key][$field_name] = array(
             '#type' => 'checkbox',
             '#title' => $field,
-            '#default_value' => $config->data['bundle'][$key][$field_name],
+            '#default_value' => isset($config->data['bundle'][$key][$field_name]) ? $config->data['bundle'][$key][$field_name] : FALSE,
           );
         }
       }
@@ -272,6 +272,9 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     '#type' => 'submit',
     '#value' => t('Save configuration'),
   );
+
+
+  dsm($config);
 
   return $form;
 }
