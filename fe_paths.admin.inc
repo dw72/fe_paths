@@ -197,7 +197,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     'entity' => array(
       '#type' => 'select',
       '#title' => t('Choose entity'),
-      '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config'),
+      '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config.'),
       '#options' => array('global' =>t('Global')) + $entities,
       '#ajax' => array(
         'callback' => 'fe_paths_add_bundle_settings',

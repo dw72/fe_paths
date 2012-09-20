@@ -676,17 +676,26 @@ function theme_fe_paths_config_data($vars) {
         $enabled_types[] = $val;
       }
     }
-    $items[] = t('File types processed: @types', array('@types' => implode(', ', $enabled_types)));
+    $items[] = t('File types processed: @types', array('@types' => !empty($enabled_types) ? implode(', ', $enabled_types) : ' - '));
   }
 
   if (isset($data['entity'])) {
-    $items[] = t('Entity: @entity', array('@entity' => $data['entity']));
-  }
+    $entities = fe_paths_get_fieldable_entities();
+    $bundles = fe_paths_get_bundle_names($data['entity']);
+    $items[] = t('Entity: @entity', array('@entity' => $entities[$data['entity']]));
+    $fields_text = array();
 
-  if (isset($data['bundle'])) {
-    $items[] = t('Bundle: @bundle', array('@bundle' => $data['bundle']));
+    if (isset($data['bundle'])) {
+      foreach ($data['bundle'] as $bundle_key => $bundle) {
+        foreach ($bundle as $field_name => $field) {
+          $fields_text[] = $bundles[$bundle_key] . ': ' . $field_name;
+        }
+      }
+      if (!empty($fields_text)) {
+        $items[] = t('In fields: !bundle', array('!bundle' => theme('item_list', array('items' => $fields_text))));
+      }
+    }
   }
-
   return theme('item_list', array('items' => $items));
 }
 
