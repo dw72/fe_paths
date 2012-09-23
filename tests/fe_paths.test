@@ -5,15 +5,7 @@
  *  Tests for File Entity Paths
  */
 
-class FileEntityPathsGlobalSettingsTestCase extends DrupalWebTestCase {
-  public static function getInfo() {
-    return array(
-      'name' => 'File Entity Paths global settings',
-      'description' => 'Test global settings.',
-      'group' => 'File Entity Paths',
-    );
-  }
-
+class FileEntityPathsHelper extends DrupalWebTestCase {
   function setUp() {
     parent::setUp(array('fe_paths_test'));
     $web_user = $this->drupalCreateUser(array(
@@ -47,9 +39,15 @@ class FileEntityPathsGlobalSettingsTestCase extends DrupalWebTestCase {
       variable_set("fep_$type", $config);
     }
   }
+}
 
-  protected function fePathsCreateConfig($settings) {
-
+class FileEntityPathsGlobalSettingsTestCase extends FileEntityPathsHelper {
+  public static function getInfo() {
+    return array(
+      'name' => 'File Entity Paths global settings',
+      'description' => 'Test global settings.',
+      'group' => 'File Entity Paths',
+    );
   }
 
   function testGlobalConfigBasic() {
@@ -76,8 +74,14 @@ class FileEntityPathsGlobalSettingsTestCase extends DrupalWebTestCase {
       )
     );
   }
+}
 
-  //function testGlobalConfigBasic() {
-  //
-  //}
+class FileEntityPathsSpecialConfigTestCase extends FileEntityPathsHelper {
+  function setUp() {
+    parent::setUp();
+  }
+
+  function getDefaultConfig() {
+
+  }
 }
