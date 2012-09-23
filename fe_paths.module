@@ -867,3 +867,4 @@ function fe_paths_get_available_fields($entity_type = NULL, $bundle = NULL) {
 
   return $return;
 }
+

@@ -216,13 +216,25 @@ function fe_paths_update_7001() {
 function fe_paths_update_7002() {
   $configs = fe_paths_config_load_multiple();
   foreach ($configs as $config) {
-    if (isset($config->data['entity']) && isset($config->data['bundle']) && !is_array($config->data['bundle'])) {
-      $fields = fe_paths_get_available_fields($config->data['entity'], $config->data['bundle']);
-      $bundle = $config->data['bundle'];
-      $config->data['bundle'] = array();
+    if (!empty($config->data['entity'])) {
+      if (isset($config->data['bundle']) && !is_array($config->data['bundle']) && $config->data['bundle'] != 'global') {
+        $fields = fe_paths_get_available_fields($config->data['entity'], $config->data['bundle']);
+        $bundle = $config->data['bundle'];
+        $config->data['bundle'] = array();
+        foreach ($fields as $field_name => $field) {
+          $config->data['bundle'][$bundle][$field_name] = 1;
+        }
+      }
+      else {
+        $bundles = fe_paths_get_bundle_names($config->data['entity']);
+        $config->data['bundle'] = array();
+        foreach ($bundles as $bundle => $value) {
+          $fields = fe_paths_get_available_fields($config->data['entity'], $bundle);
+          foreach ($fields as $field_name => $field) {
+            $config->data['bundle'][$bundle][$field_name] = 1;
+          }
+        }
 
-      foreach ($fields as $field_name => $field) {
-        $config->data['bundle'][$bundle][$field_name] = 1;
       }
       fe_paths_config_save($config);
     }
