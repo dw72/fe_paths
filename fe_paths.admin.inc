@@ -122,12 +122,12 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     'path' => array(
       '#type' => 'textfield',
       '#title' => t("Path"),
-      '#description' => t('The path applied after the sheme://. It means, if the file has scheme "public", and this field is set as "foo", the file will be moved to the public://foo path.'),
+      '#description' => t('The path applied after the scheme://. It means, if the file has scheme "public", and this field is set as "foo", the file will be moved to the public://foo path.'),
       //'#element_validate' => array('token_element_validate'),
       //'#token_types' => array('file', 'file'),
       // Tmp disable until figure out, how to get the proper directory.
       //'#field_prefix' => variable_get('file_public_path', conf_path() . '/files') . '/',
-      '#field_prefix' => "sheme://",
+      '#field_prefix' => "scheme://",
       '#default_value' => isset($config->path) ? $config->path : '',
     ),
     'filename' => array(
@@ -246,7 +246,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     'other_config' => array(
       '#type' => 'checkbox',
       '#title' => t('Override by other configuration.'),
-      '#description' => t('Let other lower weight configuration to modify path provided by this configuration. This is independent from the bottom <em>Override options</em> settings. If this is checked, the lower weighted configration will be always applied!'),
+      '#description' => t('Let other lower weight configuration to modify path provided by this configuration. This is independent of the <em>Override options</em> below. If this is checked, the lower weighted configuration will be always applied!'),
       '#default_value' => isset($config->data['other_config']) ? $config->data['other_config'] : FALSE,
       '#parents' => array('data', 'other_config'),
     ),
