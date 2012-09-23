@@ -13,10 +13,7 @@
  * @return mixed
  */
 function fe_paths_admin_form($form, &$form_state) {
-  $allowed = array(
-    'public',
-    'private'
-  );
+  $allowed = fe_paths_get_allowed_schemes();
   $settings = fe_paths_get_settings();
   $entity_info = entity_get_info('file');
   foreach ($entity_info['bundles'] as $file_type => $bundle_info) {

@@ -1,0 +1,83 @@
+<?php
+
+/**
+ * @file
+ *  Tests for File Entity Paths
+ */
+
+class FileEntityPathsGlobalSettingsTestCase extends DrupalWebTestCase {
+  public static function getInfo() {
+    return array(
+      'name' => 'File Entity Paths global settings',
+      'description' => 'Test global settings.',
+      'group' => 'File Entity Paths',
+    );
+  }
+
+  function setUp() {
+    parent::setUp(array('fe_paths_test'));
+    $web_user = $this->drupalCreateUser(array(
+      'create fe_paths_test_1 content',
+      'create fe_paths_test_2 content',
+      'administer files',
+    ));
+    $this->drupalLogin($web_user);
+    $this->setDefaultVariables(array('image', 'text'));
+    $this->setUpFiles();
+  }
+
+  function setUpFiles() {
+    $types = array('text', 'image');
+    foreach ($types as $type) {
+      foreach ($this->drupalGetTestFiles($type) as $file) {
+        $this->files[$type][] = $file;
+      }
+    }
+  }
+
+  protected function setDefaultVariables($file_types = array(), $postfix = '') {
+    foreach ($file_types as $type) {
+      $config = array();
+      foreach (fe_paths_get_allowed_schemes() as $scheme) {
+        $config[$scheme] = array(
+          'path' => $type . $postfix,
+          'filename' => $type . $postfix . '.fep.test',
+        );
+      }
+      variable_set("fep_$type", $config);
+    }
+  }
+
+  protected function fePathsCreateConfig($settings) {
+
+  }
+
+  function testGlobalConfigBasic() {
+    $image_config = variable_get('fep_image');
+    $this->assertTrue($image_config['public']['path'] == 'image', 'fep_image variable set up successful. Value: ' . $image_config['public']['path']);
+
+    // Create a file.
+    $edit = array();
+    $edit["files[upload]"] = drupal_realpath($this->files['image'][0]->uri);
+
+    $this->drupalPost('file/add', $edit, t('Submit'));
+    $max_fid_after = db_query('SELECT MAX(fid) AS fid FROM {file_managed}')->fetchField();
+
+    $file = file_load($max_fid_after);
+
+    $expected_uri = 'public://' . $image_config['public']['path'] . '/' . $image_config['public']['filename'];
+    $this->assertTrue($file->filename != $file->origname, 'The original filename different, than the saved. The file process works when added new file in file/add path. Issue: #1791270');
+    $this->assertTrue($file->uri = $expected_uri, format_string('The original filename was changed successful from @original by the pattern: @path/@filename to @uri',
+      array(
+        '@original' => $file->origname,
+        '@path' => $image_config['public']['path'],
+        '@filename' => $image_config['public']['filename'],
+        '@uri' => $file->uri)
+      )
+    );
+  }
+
+  //function testGlobalConfigBasic() {
+  //
+  //}
+}

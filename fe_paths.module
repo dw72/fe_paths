@@ -133,10 +133,15 @@ function fe_paths_entity_presave($entity, $type) {
     if (empty($entity->origname)) {
       $entity->origname = $entity->filename;
     }
+    if (!isset($entity->fe_paths_processed)) {
+      drupal_register_shutdown_function('fe_paths_file_process', $entity, $entity, $type);
+      $entity->fe_paths_processed = TRUE;
+    }
+
   }
   // Only passed to process, if entity was not processed before, and
   // and the entity is fieldable.
-  elseif (!isset($entity->fe_paths_processed) && array_key_exists($type, fe_paths_get_fieldable_entities())) {
+  if (!isset($entity->fe_paths_processed) && array_key_exists($type, fe_paths_get_fieldable_entities())) {
     $entity_info = entity_get_info($type);
     // Get all fields of the saved entity.
     $bundle = NULL;
@@ -702,6 +707,18 @@ function theme_fe_paths_config_data($vars) {
 /********************************
  *       Helper functions       *
  ********************************/
+
+/**
+ * Get all allowed file schemes to be processed.
+ * @return array
+ */
+function fe_paths_get_allowed_schemes() {
+  //@todo make it altereble
+  return array(
+    'public',
+    'private'
+  );
+}
 
 /**
  * @param $entity
