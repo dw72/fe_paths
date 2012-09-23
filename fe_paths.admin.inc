@@ -87,7 +87,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
   $entity_name = isset($config->data['entity']) ? $config->data['entity'] : NULL;
   // Set $entity_name value own $form_state value, if exists. It means, the form
   // is changed during ajax process.
-  $entity_name = isset($form_state['values']['data']['entity']) && $form_state['values']['data']['entity'] != 'global' ? $form_state['values']['data']['entity'] : $entity_name;
+  $entity_name = isset($form_state['values']['data']['entity']) ? $form_state['values']['data']['entity'] : $entity_name;
 
   foreach ($file_entity_info['bundles'] as $name => $bundle) {
     $file_types[$name] = $bundle['label'];
@@ -214,7 +214,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     )
   );
 
-  if (!is_null($entity_name)) {
+  if (!is_null($entity_name) && $entity_name != 'global') {
     $bundles = fe_paths_get_bundle_names($entity_name);
     foreach ($bundles as $key => $bundle) {
       $form['parent_entity']['bundle'][$key] = array(
@@ -269,9 +269,6 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     '#type' => 'submit',
     '#value' => t('Save configuration'),
   );
-
-
-  dsm($config);
 
   return $form;
 }
