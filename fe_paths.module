@@ -134,7 +134,6 @@ function fe_paths_entity_presave($entity, $type) {
       $entity->origname = $entity->filename;
     }
     if (!isset($entity->fe_paths_processed)) {
-      dsm(get_defined_vars());
       drupal_register_shutdown_function('fe_paths_file_process', $entity, $entity, $type);
       $entity->fe_paths_processed = TRUE;
     }
