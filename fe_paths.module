@@ -162,7 +162,7 @@ function fe_paths_entity_presave($entity, $type) {
         foreach ($files as $file) {
           // Just for testing, in _registershutdown hard to debug.
           //fe_paths_file_process(file_load($file['fid']), $entity, $type);
-          drupal_register_shutdown_function('fe_paths_file_process', file_load($file['fid']), $entity, $type);
+          drupal_register_shutdown_function('fe_paths_file_process', file_load($file['fid']), $entity, $type, $field['field_name']);
         }
       }
       // Searching in textfields for possibly embed files by media wysiwsg.
@@ -173,7 +173,7 @@ function fe_paths_entity_presave($entity, $type) {
             $tag = str_replace(array('[[', ']]'), '', $tag);
             $tag_info = drupal_json_decode($tag);
             if (isset($tag_info['fid'])) {
-              drupal_register_shutdown_function('fe_paths_file_process', file_load($tag_info['fid']), $entity, $type);
+              drupal_register_shutdown_function('fe_paths_file_process', file_load($tag_info['fid']), $entity, $type, $field['field_name']);
             }
           }
         }
@@ -202,7 +202,7 @@ function fe_paths_file_delete($file) {
  * @see fe_paths_file_presave().
  * @see fe_paths_file_process().
  */
-function fe_paths_file_process($file, $entity, $type) {
+function fe_paths_file_process($file, $entity, $type, $field_name = NULL) {
   if (fe_paths_file_process_available($file)) {
     $configs = fe_paths_config_load_multiple();
     fe_paths_add_global_settings_to_config($configs, $file);
@@ -257,7 +257,7 @@ function fe_paths_file_process($file, $entity, $type) {
       $this_file_config = $config == $file_config;
       $data = $config->data;
 
-      // If override by other configuration is not allowed, and doesn'r reach
+      // If override by other configuration is not allowed, and doesn't reach
       // own config, skip to the next config.
       if ($file_config && !$file_config->data['other_config'] && !$this_file_config) {
         continue;
@@ -292,15 +292,27 @@ function fe_paths_file_process($file, $entity, $type) {
       if (isset($data['entity']) && $data['entity'] != $type && $data['entity'] != 'global') {
         continue;
       }
-      // Investigation of bundle settings. It's neccessary if data contains
-      // bundle settings and the entity has bundle definition.
-      if (isset($data['bundle'])) {
-        // Doesn't match, if the bundle value is not global, or the entity
-        // has different bundle, then the settings.
-        if ($data['bundle'] != 'global' && $data['bundle'] != $bundle) {
+
+      // If bundle doesn't match, skip, but only if bundle is set.
+      if (isset($data['bundle'])  && !isset($data['bundle'][$bundle])) {
+        continue;
+      }
+
+      // Only need field investigation, if field name was passed to this
+      // function.
+      if (!is_null($field_name)) {
+        // If the field name doesn't exists, skip.
+        if (!isset($data['bundle'][$bundle][$field_name])) {
+          continue;
+        }
+
+        // If the field name isn't checked in config, skip
+        if (!$data['bundle'][$bundle][$field_name]) {
           continue;
         }
       }
+
+      //$fields = fe_paths_get_available_fields($type, $bundle);
 
       if (fe_paths_move_file($file, $config->path, $config->filename, $type, $data, $entity)) {
         $match = TRUE;
@@ -776,7 +788,10 @@ function fe_paths_add_global_settings_to_config(&$config, $file) {
   $object->id = 0;
   $object->path = $settings[$scheme]['path'];
   $object->filename = $settings[$scheme]['filename'];
-  $object->data = array();
+  $object->data = array(
+    // Always enable to override the defaults!
+    'other_config' => 1,
+  );
   $config[0] = $object;
 }
 
