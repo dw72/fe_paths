@@ -47,6 +47,7 @@ class FileEntityPathsGlobalSettingsTestCase extends FileEntityPathsHelper {
       'name' => 'File Entity Paths global settings',
       'description' => 'Test global settings.',
       'group' => 'File Entity Paths',
+      'dependencies' => array('file_entity'),
     );
   }
 
