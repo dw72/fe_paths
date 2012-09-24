@@ -19,7 +19,7 @@ function fe_paths_admin_form($form, &$form_state) {
   foreach ($entity_info['bundles'] as $file_type => $bundle_info) {
     $form["fep_$file_type"] = array(
       '#type' => 'fieldset',
-      '#title' => t("Global settings for $file_type"),
+      '#title' => check_plain(t("Global settings for $file_type")),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       '#tree' => TRUE,
@@ -178,7 +178,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
   $form['file_entity'] = array(
     '#type' => 'fieldset',
     '#title' => t('File types'),
-    'file_bundle' => array (
+    'file_bundle' => array(
       '#type' => 'checkboxes',
       '#options' => $file_types,
       '#description' => t('Choose, in which file types should this configuration be activated.'),
@@ -195,7 +195,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
       '#type' => 'select',
       '#title' => t('Choose entity'),
       '#description' => t('Choose the parent entity. The parent entity determine, which type of tokens will be used in this config.'),
-      '#options' => array('global' =>t('Global')) + $entities,
+      '#options' => array('global' => t('Global')) + $entities,
       '#ajax' => array(
         'callback' => 'fe_paths_add_bundle_settings',
         'wrapper' => 'bundle-target',
@@ -219,7 +219,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     foreach ($bundles as $key => $bundle) {
       $form['parent_entity']['bundle'][$key] = array(
         '#type' => 'fieldset',
-        '#title' => $bundles[$key],
+        '#title' => check_plain($bundles[$key]),
       );
 
       $fields = fe_paths_get_available_fields($entity_name, $key);
@@ -227,7 +227,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
         foreach ($fields as $field_name => $field) {
           $form['parent_entity']['bundle'][$key][$field_name] = array(
             '#type' => 'checkbox',
-            '#title' => $field,
+            '#title' => check_plain($field),
             '#default_value' => isset($config->data['bundle'][$key][$field_name]) ? $config->data['bundle'][$key][$field_name] : FALSE,
           );
         }
@@ -259,7 +259,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
         But if you upload the file to a node, and you use it again in other node, the new node tokens (if set) will be saved.
         If settings <em>Within the same entity</em> is choosen, the file used in two different node will be not updated,
         but if you set to change filename to node title, and the title is changed in the node, in which the file was originally uploaded,
-        the path will be changed to the new node title.' ),
+        the path will be changed to the new node title.'),
       '#options' => fe_paths_get_override_options(),
       '#default_value' => isset($config->data['override_options']) ? $config->data['override_options'] : FE_PATHS_OVERRIDE_NEVER,
       '#parents' => array('data', 'override_options'),

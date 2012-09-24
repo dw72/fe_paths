@@ -33,7 +33,7 @@ function fe_paths_permission() {
 function fe_paths_menu() {
   $items['admin/config/media/fe-paths'] = array(
     'title' => 'File Entity Paths settings',
-    'description' => t('Configure custom paths for file entities'),
+    'description' => 'Configure custom paths for file entities',
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('administer_fe_paths'),
     'page callback' => 'fe_paths_global_page',
@@ -191,15 +191,15 @@ function fe_paths_file_delete($file) {
 
 /********************************
  *    Main process functions    *
- ********************************/
+ * ******************************/
 
 /**
  * Actually pre processes the files. Set a $file->fe_paths_processed flag on
  * the file entity, then add to process queue. The file will be processed
  * on drupal_register_shutdown.
  *
- * @see fe_paths_file_presave().
- * @see fe_paths_file_process().
+ * @see fe_paths_file_presave()
+ * @see fe_paths_file_process()
  */
 function fe_paths_file_process($file, $entity, $type, $field_name = NULL) {
   if (fe_paths_file_process_available($file)) {
@@ -442,7 +442,7 @@ function fe_paths_file_process_available($file) {
 
   // @todo: is this exists in this structure? We just try it.
   if (!isset($file->type)) {
-    watchdog('File Entity devel helper', t('<em>!isset($file->type)</em> condition was marked as removable in File Entity Paths module. If you still see this message in log, please let me know in <a href="http://drupal.org/node/1783934">Check whether all condition need in the fe_paths_file_process_available()</a> issue.'));
+    watchdog('File Entity devel helper', '<em>!isset($file->type)</em> condition was marked as removable in File Entity Paths module. If you still see this message in log, please let me know in <a href="http://drupal.org/node/1783934">Check whether all condition need in the fe_paths_file_process_available()</a> issue.');
     return FALSE;
   }
 
@@ -462,7 +462,7 @@ function fe_paths_file_process_available($file) {
 /********************************
  *       Entity functions       *
  *      (fe_paths_config)       *
- ********************************/
+ * ******************************/
 
 /**
  * Load multiple File Entity Paths config entities based on certain conditions.
@@ -590,7 +590,7 @@ function fe_paths_prepare_config(&$config) {
 
 /********************************
  * File Entity Path usage CRUD  *
- ********************************/
+ * ******************************/
 
 /**
  * Add or update a fe_paths usage record to the database.
@@ -672,7 +672,7 @@ function fe_paths_usage($fid, $reset = FALSE) {
 
 /********************************
  *        Theme functions       *
- ********************************/
+ * ******************************/
 
 function theme_fe_paths_config_data($vars) {
   $data = $vars['config']->data;
@@ -710,7 +710,7 @@ function theme_fe_paths_config_data($vars) {
 
 /********************************
  *       Helper functions       *
- ********************************/
+ * ******************************/
 
 /**
  * Get all allowed file schemes to be processed.
