@@ -143,8 +143,10 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
       '#title' => t('Replacement patterns'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
-      '#description' => theme('token_tree', array('token_types' => array_keys($entities))),
-      '#weight' => 1000,
+      'help' => array(
+        '#theme' => 'token_tree',
+        '#token_types' => array_keys($entities),
+      ),
       '#prefix' => '<div id="fe-paths-tokens">',
       '#suffix' => '</div>',
     ),
