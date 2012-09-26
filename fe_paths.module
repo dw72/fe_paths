@@ -697,7 +697,9 @@ function theme_fe_paths_config_data($vars) {
     if (isset($data['bundle'])) {
       foreach ($data['bundle'] as $bundle_key => $bundle) {
         foreach ($bundle as $field_name => $field) {
-          $fields_text[] = $bundles[$bundle_key] . ': ' . $field_name;
+          if ($bundle[$field_name]) {
+            $fields_text[] = $bundles[$bundle_key] . ': ' . $field_name;
+          }
         }
       }
       if (!empty($fields_text)) {
