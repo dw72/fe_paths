@@ -218,25 +218,28 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
 
   if (!is_null($entity_name) && $entity_name != 'global') {
     $bundles = fe_paths_get_bundle_names($entity_name);
+
+    // Only listed the bundles, in which proper field exists.
     foreach ($bundles as $key => $bundle) {
+      $fields = fe_paths_get_available_fields($entity_name, $key);
+      if (empty($fields)) {
+        unset($bundles[$key]);
+      }
+    }
+
+    foreach ($bundles as $key => $bundle) {
+      $fields = fe_paths_get_available_fields($entity_name, $key);
+
       $form['parent_entity']['bundle'][$key] = array(
         '#type' => 'fieldset',
         '#title' => check_plain($bundles[$key]),
       );
 
-      $fields = fe_paths_get_available_fields($entity_name, $key);
-      if (!empty($fields)) {
-        foreach ($fields as $field_name => $field) {
-          $form['parent_entity']['bundle'][$key][$field_name] = array(
-            '#type' => 'checkbox',
-            '#title' => check_plain($field),
-            '#default_value' => isset($config->data['bundle'][$key][$field_name]) ? $config->data['bundle'][$key][$field_name] : FALSE,
-          );
-        }
-      }
-      else {
-        $form['parent_entity']['bundle'][$key]['fallback'] = array(
-          '#markup' => t('No available field for this entity.'),
+      foreach ($fields as $field_name => $field) {
+        $form['parent_entity']['bundle'][$key][$field_name] = array(
+          '#type' => 'checkbox',
+          '#title' => check_plain($field),
+          '#default_value' => isset($config->data['bundle'][$key][$field_name]) ? $config->data['bundle'][$key][$field_name] : FALSE,
         );
       }
     }
