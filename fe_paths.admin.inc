@@ -122,7 +122,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     'path' => array(
       '#type' => 'textfield',
       '#title' => t("Path"),
-      '#description' => t('The path applied after the scheme://. It means, if the file has scheme "public", and this field is set as "foo", the file will be moved to the public://foo path.'),
+      '#description' => t('The path applied after the scheme://. It means, if the file has scheme "public", and this field is set as "foo", the file will be moved to the public://foo path. <strong>Do not use trailing slash at the end!</strong>'),
       //'#element_validate' => array('token_element_validate'),
       //'#token_types' => array('file', 'file'),
       // Tmp disable until figure out, how to get the proper directory.
@@ -133,7 +133,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     'filename' => array(
       '#type' => 'textfield',
       '#title' => t("Filename"),
-      '#description' => t('Set the filename pattern. This pattern will be validated based on parent entity settings. If settings is "global", all types of tokens are enabled. File tokens is always accepted.'),
+      '#description' => t('Set the filename pattern. This pattern will be validated based on parent entity settings. If settings is "global", all types of tokens are enabled. File tokens is always accepted. <strong>Do not use trailing slash in this field!</strong>'),
       //'#element_validate' => array('token_element_validate'),
       //'#token_types' => array('file', 'file'),
       '#default_value' => isset($config->filename) ? $config->filename : '[file:name-only-original].[file:extension-original]',
