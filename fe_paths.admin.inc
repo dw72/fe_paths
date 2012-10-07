@@ -161,8 +161,8 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     '#parents' => array('data', 'transliteration'),
   );
   if (!module_exists('transliteration')) {
-    $form['transliteration']['#disabled'] = TRUE;
-    $form['transliteration']['#default_value'] = 0;
+    $form['path_name']['transliteration']['#disabled'] = TRUE;
+    $form['path_name']['transliteration']['#default_value'] = 0;
   }
 
   $form['path_name']['pathauto'] = array(
@@ -173,8 +173,8 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
     '#parents' => array('data', 'pathauto'),
   );
   if (!module_exists('pathauto')) {
-    $form['pathauto']['#disabled'] = TRUE;
-    $form['pathauto']['#default_value'] = 0;
+    $form['path_name']['pathauto']['#disabled'] = TRUE;
+    $form['path_name']['pathauto']['#default_value'] = 0;
   }
 
   $form['file_entity'] = array(

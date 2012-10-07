@@ -365,7 +365,7 @@ function fe_paths_move_file($file, $replace_path, $replace_filename, $token_type
   ), array('clear' => TRUE));
 
   // Modify text by transliteration.
-  if (isset($config_data['transliteration']) && $config_data['transliteration']) {
+  if (isset($config_data['transliteration']) && $config_data['transliteration'] && module_exists('transliteration')) {
     // The path need some vudu to clean, because transliteration remove the
     // slashes.
     $parts = array();
@@ -377,7 +377,7 @@ function fe_paths_move_file($file, $replace_path, $replace_filename, $token_type
   }
 
   // Modify text by pathauto.
-  if (isset($config_data['pathauto']) && $config_data['pathauto']) {
+  if (isset($config_data['pathauto']) && $config_data['pathauto'] && module_exists('pathauto')) {
     module_load_include('inc', 'pathauto');
 
     $parts = array();
