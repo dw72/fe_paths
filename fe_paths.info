@@ -4,6 +4,6 @@ core = 7.x
 description = Adds per bundle Token based file sorting and renaming functionalities for file entities
 dependencies[] = token
 dependencies[] = entity
-dependencies[] = file_entity (>=7.x-2.0-unstable6)
+dependencies[] = file_entity
 files[] = tests/fe_paths.test
 configure = admin/config/media/fe-paths

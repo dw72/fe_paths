@@ -133,19 +133,32 @@ function fe_paths_schema_alter(&$schema) {
  * Implements hook_requirements().
  */
 function fe_paths_requirements($phase) {
-  // filefield_paths and fe_paths can't work together, no let install the module
   if ($phase == 'update' || $phase == 'install') {
-    if (module_exists('filefield_paths') || drupal_get_installed_schema_version('filefield_paths') != SCHEMA_UNINSTALLED) {
-      $t = get_t();
-      return array(
-        'fe_paths' => array(
-          'title' => $t('File Entity Paths status.'),
-          'value' => '',
-          'description' => $t('The File Entity Paths can\'t work with File (Field) Paths together. You have to disable and uninstall it first.'),
-          'severity' => REQUIREMENT_ERROR,
-        ),
+    $return = array();
+    $t = get_t();
+    $files = system_rebuild_module_data();
+    // Check file entity dependency. The version checking was removed from
+    // .info, because drupal.org testbot doesn't handle >=7.x-2.0-unstable6
+    // style dependecy.
+    $file_entity = drupal_check_incompatibility(drupal_parse_dependency('file_entity (>=7.x-2.0-unstable6)'), str_replace(DRUPAL_CORE_COMPATIBILITY . '-', '', $files['file_entity']->info['version']));
+    if (!is_null($file_entity)) {
+      $return['fe_paths_file_entity'] = array(
+        'title' => $t('File Entity Paths incompatible dependency.'),
+        'value' => '',
+        'description' => $t('The File Entity Paths needs at least @version of File Entity mödule.', array('@version' => $file_entity)),
+        'severity' => REQUIREMENT_ERROR,
       );
     }
+    // filefield_paths and fe_paths can't work together, no let install the module
+    if (module_exists('filefield_paths') || drupal_get_installed_schema_version('filefield_paths') != SCHEMA_UNINSTALLED) {
+      $return['fe_paths_ffp'] = array(
+        'title' => $t('File Entity Paths status.'),
+        'value' => '',
+        'description' => $t('The File Entity Paths can\'t work with File (Field) Paths together. You have to disable and uninstall it first.'),
+        'severity' => REQUIREMENT_ERROR,
+      );
+    }
+    return $return;
   }
 }
 
