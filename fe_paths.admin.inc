@@ -82,7 +82,7 @@ function fe_paths_entity_edit_form($form, &$form_state, $config = NULL) {
   $file_entity_info = entity_get_info('file');
   $entities = fe_paths_get_fieldable_entities();
   $file_types = array();
-  $file_types_defaults = array();
+  $file_types_defaults = isset($config->data['file_entity']) ? $config->data['file_entity'] : array();
   // The name of the entity, which is connected to this config. Can be changed by $form_state.
   $entity_name = isset($config->data['entity']) ? $config->data['entity'] : NULL;
   // Set $entity_name value own $form_state value, if exists. It means, the form
