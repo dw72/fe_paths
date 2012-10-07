@@ -187,6 +187,7 @@ class FileEntityPathsConfigurationPageTestCase extends FileEntityPathsHelper {
           '@expected' => $status_text,
         ))
       );
+      // http://drupal.org/node/1797646
       $this->assertTrue($path[0] == $config->path, t('Path is the same in the table as in the configuration. Result: @result, Expected: @expected',
         array(
           '@result' => $path[0],

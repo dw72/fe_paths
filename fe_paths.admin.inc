@@ -348,7 +348,7 @@ function fe_paths_config_table_form($form, &$form_state, $configs) {
       '#markup' => $config->status ? t('Enabled') : t('Disabled'),
     );
     $form['config'][$name]['path'] = array(
-      '#markup' => check_plain($config->machine_name),
+      '#markup' => check_plain($config->path),
     );
     $form['config'][$name]['filename'] = array(
       '#markup' => check_plain($config->filename),
