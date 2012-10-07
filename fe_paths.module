@@ -144,8 +144,9 @@ function fe_paths_entity_presave($entity, $type) {
     $entity_info = entity_get_info($type);
     // Get all fields of the saved entity.
     $bundle = NULL;
-    if (isset($entity_info['bundle keys']['bundle'])) {
-      $bundle = $entity->{$entity_info['bundle keys']['bundle']};
+
+    if (isset($entity_info['entity keys']['bundle'])) {
+      $bundle = $entity->{$entity_info['entity keys']['bundle']};
     }
     else {
       $bundle = $type;
@@ -211,7 +212,7 @@ function fe_paths_file_process($file, $entity, $type, $field_name = NULL) {
     $file_config = FALSE;
     $entity_key = $entity_info['entity keys']['id'];
     $entity_id = $entity->$entity_key;
-    $bundle_key = isset($entity_info['bundle keys']['bundle']) ? $entity_info['bundle keys']['bundle'] : 'type';
+    $bundle_key = isset($entity_info['entity keys']['bundle']) ? $entity_info['entity keys']['bundle'] : 'type';
     // Like user, it hasn't bundle keys, but 'user' is a bundle.
     $bundle = isset($entity->$bundle_key) ? $entity->$bundle_key : $type;
 
@@ -848,6 +849,11 @@ function fe_paths_get_bundle_names($entity_type) {
   return $bundles;
 }
 
+/**
+ * Get all predefined override options in the configuration.
+ *
+ * @return array
+ */
 function fe_paths_get_override_options() {
   return array(
     FE_PATHS_OVERRIDE_NEVER => t('Never'),
