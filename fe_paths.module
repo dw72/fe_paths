@@ -680,7 +680,7 @@ function theme_fe_paths_config_data($vars) {
   $data = $vars['config']->data;
   $items = array();
 
-  if (isset($data['file_entity'])) {
+  if (isset($data['file_entity']) && !empty($data['file_entity'])) {
     $enabled_types = array();
     foreach ($data['file_entity'] as $key => $val) {
       if ($key === $val) {
@@ -690,13 +690,15 @@ function theme_fe_paths_config_data($vars) {
     $items[] = t('File types processed: @types', array('@types' => !empty($enabled_types) ? implode(', ', $enabled_types) : ' - '));
   }
 
-  if (isset($data['entity'])) {
+  if (isset($data['entity']) && !empty($data['entity'])) {
     $entities = fe_paths_get_fieldable_entities();
     $bundles = fe_paths_get_bundle_names($data['entity']);
-    $items[] = t('Entity: @entity', array('@entity' => $entities[$data['entity']]));
+    if (isset($entities[$data['entity']])) {
+      $items[] = t('Entity: @entity', array('@entity' => $entities[$data['entity']]));
+    }
     $fields_text = array();
 
-    if (isset($data['bundle'])) {
+    if (isset($data['bundle']) && !empty($data['bundle'])) {
       foreach ($data['bundle'] as $bundle_key => $bundle) {
         foreach ($bundle as $field_name => $field) {
           if ($bundle[$field_name]) {
@@ -844,8 +846,10 @@ function fe_paths_get_fieldable_entities() {
 function fe_paths_get_bundle_names($entity_type) {
   $entity = entity_get_info($entity_type);
   $bundles = array();
-  foreach ($entity['bundles'] as $key => $bundle) {
-    $bundles[$key] = $bundle['label'];
+  if (!empty($entity['bundles'])) {
+    foreach ($entity['bundles'] as $key => $bundle) {
+      $bundles[$key] = $bundle['label'];
+    }
   }
   return $bundles;
 }
@@ -900,4 +904,3 @@ function fe_paths_get_available_fields($entity_type = NULL, $bundle = NULL) {
 
   return $return;
 }
-
