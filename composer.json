@@ -13,7 +13,7 @@
     }],
     "support": {
       "forum": "https://www.drupal.org/project/issues/fe_paths"
-    }
+    },
     "require": {
         "drupal/file_entity": "2.*",
         "drupal/token": "1.*",
