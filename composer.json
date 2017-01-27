@@ -1,0 +1,22 @@
+{
+    "name": "drupal/fe_paths",
+    "description": "Adds per bundle Token based file sorting and renaming functionalities for file entities.",
+    "type": "drupal-module",
+    "keywords": ["file", "path"],
+    "homepage": "https://www.drupal.org/project/fe_paths",
+    "license": "GPL-2.0+",
+    "minimum-stability": "dev",
+    "authors": [{
+        "name": "Gabor Szanto",
+        "homepage": "https://twitter.com/szantogabor",
+        "role": "Maintainer"
+    }],
+    "support": {
+      "forum": "https://www.drupal.org/project/issues/fe_paths"
+    }
+    "require": {
+        "drupal/file_entity": "2.*",
+        "drupal/token": "1.*",
+        "drupal/entity": "1.*"
+    }
+}
