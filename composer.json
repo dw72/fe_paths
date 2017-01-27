@@ -5,7 +5,6 @@
     "keywords": ["file", "path"],
     "homepage": "https://www.drupal.org/project/fe_paths",
     "license": "GPL-2.0+",
-    "minimum-stability": "dev",
     "authors": [{
         "name": "Gabor Szanto",
         "homepage": "https://twitter.com/szantogabor",
@@ -15,8 +14,8 @@
       "forum": "https://www.drupal.org/project/issues/fe_paths"
     },
     "require": {
-        "drupal/file_entity": "2.*",
-        "drupal/token": "1.*",
-        "drupal/entity": "1.*"
+        "drupal/file_entity": "~2.0",
+        "drupal/token": "~1.0",
+        "drupal/entity": "~1.0"
     }
 }
